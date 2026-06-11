@@ -348,3 +348,20 @@ INSERT INTO Bilhete_FastPass (data_validade, status_uso, id_sorteio, id_usuario,
 ('2026-06-26', 'Pendente', 2, 2, 1),
 ('2026-06-27', 'Expirado', 3, 5, 4),
 ('2026-06-28', 'Pendente', 4, 4, 1);
+
+-- =======================================================
+-- BLOCO DE DQL (DATA QUERY LANGUAGE) E VIEWS
+-- =======================================================
+
+-- Criando a View exigida nas especificações do projeto
+CREATE VIEW vw_relatorio_fluxo_ru AS
+SELECT 
+    r.nome_refeitorio, 
+    r.tipo_servico, 
+    COUNT(a.id_acesso) AS total_pessoas_atendidas, 
+    SUM(a.valor_cobrado) AS faturamento_diario
+FROM Refeitorio r
+JOIN Catraca c ON r.id_refeitorio = c.id_refeitorio
+JOIN Acesso_RU a ON c.id_catraca = a.id_catraca
+WHERE DATE(a.data_hora_entrada) = CURDATE()
+GROUP BY r.id_refeitorio, r.nome_refeitorio, r.tipo_servico;
