@@ -62,7 +62,7 @@ CREATE TABLE Usuario_RU (
     email VARCHAR(100) NOT NULL,
     saldo_atual FLOAT NOT NULL,
     prioridade_legal BOOLEAN NOT NULL,
-    foto_perfil VARCHAR(255),
+    foto_perfil BLOB NOT NULL,
     id_categoria INT NOT NULL,
 
     PRIMARY KEY (id_usuario),
@@ -82,7 +82,7 @@ CREATE TABLE Documentacao_Assistencia (
     id_documento INT AUTO_INCREMENT,
     data_envio DATE NOT NULL,
     status_aprovacao VARCHAR(100) NOT NULL,
-    comprovante_pdf VARCHAR(255) NOT NULL,
+    comprovante_pdf BLOB NOT NULL,
     id_usuario INT NOT NULL,
 
     PRIMARY KEY (id_documento),
