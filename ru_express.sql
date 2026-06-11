@@ -160,3 +160,61 @@ BEGIN
 END //
 
 DELIMITER ;
+
+-- Alteração no delimitador para compilar a Procedure inteira de uma vez.
+DELIMITER //
+
+CREATE PROCEDURE Gerar_Sorteio_FastPass (
+    IN p_data DATE,
+    IN p_vagas INT,
+    IN p_id_refeitorio INT
+)
+BEGIN   
+    -- Variável que guarda o ID do sorteio criado.
+    DECLARE v_id_sorteio INT;
+
+    -- 1. Registrar o Evento Gerador
+    INSERT INTO Sorteio_Diario (data_sorteio, quantidade_vagas)
+    VALUES (p_data, p_vagas);
+
+    -- Capturar o ID gerado automaticamente (AUTO_INCREMENT) no insert acima.
+    SET v_id_sorteio = LAST_INSERT_ID();
+
+    -- 2. Criar a memória temporária para os ganhadores
+    CREATE TEMPORARY TABLE IF NOT EXISTS Temp_Ganhadores (
+        id_usuario INT
+    );
+
+    -- Limpar a tabela temporária por segurança (caso a procedure rode duas vezes na mesma sessão)
+    TRUNCATE TABLE Temp_Ganhadores;
+
+    -- 3. Sorteio Ponderado
+    -- Apenas os alunos que ganharam são inseridos na tabela.
+    INSERT INTO Temp_Ganhadores (id_usuario)
+    SELECT id_usuario
+    FROM Estudante
+    ORDER BY POW(RAND(), 1.0 / (dias_sem_fastpass + 1)) DESC
+    LIMIT p_vagas;
+
+    -- 4. Emitir os Bilhetes
+    INSERT INTO Bilhete_FastPass (data_validade, status_uso, id_sorteio, id_usuario, id_refeitorio)
+    SELECT p_data, 'Pendente', v_id_sorteio, id_usuario, p_id_refeitorio
+    FROM Temp_Ganhadores;
+
+    -- 5. Atualizar os Pesos (A Punição e a Recompensa)
+    -- Para os não sorteados: aumentar o peso para o dia seguinte.
+    UPDATE Estudante
+    SET dias_sem_fastpass = dias_sem_fastpass + 1
+    WHERE id_usuario NOT IN (SELECT id_usuario FROM Temp_Ganhadores);
+
+    -- Para os ganhadores: resetar o peso para zero
+    UPDATE Estudante
+    SET dias_sem_fastpass = 0
+    WHERE id_usuario IN (SELECT id_usuario FROM Temp_Ganhadores);
+
+    -- 6. Limpar a memória do servidor
+    DROP TEMPORARY TABLE Temp_Ganhadores;
+
+END //
+
+DELIMITER ;
