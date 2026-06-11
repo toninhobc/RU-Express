@@ -143,3 +143,20 @@ CREATE TABLE Bilhete_FastPass (
     FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario),
     FOREIGN KEY (id_refeitorio) REFERENCES Refeitorio(id_refeitorio)
 );
+
+-- Mudança temporária no delimitador (boa prática).
+-- Assim, o banco não confunde os pontos e vírgulas internos com o fim do comando.
+
+DELIMITER //
+
+CREATE TRIGGER trg_atualizar_saldo_apos_recarga
+AFTER INSERT ON Recarga_Saldo
+FOR EACH ROW
+BEGIN
+    -- 'NEW' vai acessar os dados da linha que acabou de ser inserida.
+    UPDATE Usuario_RU
+    SET saldo_atual = saldo_atual + NEW.valor_adicionado
+    WHERE id_usuario = NEW.id_usuario;
+END //
+
+DELIMITER ;
