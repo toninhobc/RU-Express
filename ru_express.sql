@@ -1,3 +1,7 @@
+-- =======================================================
+-- DDL (DATA DEFINITION LANGUAGE) - ESTRUTURA DO BANCO
+-- =======================================================
+
 -- Tabelas independentes (PK)
 
 CREATE TABLE Campus (
@@ -144,8 +148,9 @@ CREATE TABLE Bilhete_FastPass (
     FOREIGN KEY (id_refeitorio) REFERENCES Refeitorio(id_refeitorio)
 );
 
--- Mudança temporária no delimitador (boa prática).
--- Assim, o banco não confunde os pontos e vírgulas internos com o fim do comando.
+-- =======================================================
+-- TRIGGER: Atualiza saldo automaticamente após recarga
+-- =======================================================
 
 DELIMITER //
 
@@ -153,7 +158,6 @@ CREATE TRIGGER trg_atualizar_saldo_apos_recarga
 AFTER INSERT ON Recarga_Saldo
 FOR EACH ROW
 BEGIN
-    -- 'NEW' vai acessar os dados da linha que acabou de ser inserida.
     UPDATE Usuario_RU
     SET saldo_atual = saldo_atual + NEW.valor_adicionado
     WHERE id_usuario = NEW.id_usuario;
@@ -161,7 +165,10 @@ END //
 
 DELIMITER ;
 
--- Alteração no delimitador para compilar a Procedure inteira de uma vez.
+-- =======================================================
+-- PROCEDURE: Sorteio ponderado de FastPass
+-- =======================================================
+
 DELIMITER //
 
 CREATE PROCEDURE Gerar_Sorteio_FastPass (
@@ -170,49 +177,43 @@ CREATE PROCEDURE Gerar_Sorteio_FastPass (
     IN p_id_refeitorio INT
 )
 BEGIN   
-    -- Variável que guarda o ID do sorteio criado.
     DECLARE v_id_sorteio INT;
 
-    -- 1. Registrar o Evento Gerador
+    -- 1. Registrar o sorteio
     INSERT INTO Sorteio_Diario (data_sorteio, quantidade_vagas)
     VALUES (p_data, p_vagas);
 
-    -- Capturar o ID gerado automaticamente (AUTO_INCREMENT) no insert acima.
     SET v_id_sorteio = LAST_INSERT_ID();
 
-    -- 2. Criar a memória temporária para os ganhadores
+    -- 2. Tabela temporária para os ganhadores
     CREATE TEMPORARY TABLE IF NOT EXISTS Temp_Ganhadores (
         id_usuario INT
     );
 
-    -- Limpar a tabela temporária por segurança (caso a procedure rode duas vezes na mesma sessão)
     TRUNCATE TABLE Temp_Ganhadores;
 
-    -- 3. Sorteio Ponderado
-    -- Apenas os alunos que ganharam são inseridos na tabela.
+    -- 3. Sorteio ponderado: quanto mais dias sem FastPass, maior a chance
     INSERT INTO Temp_Ganhadores (id_usuario)
     SELECT id_usuario
     FROM Estudante
     ORDER BY POW(RAND(), 1.0 / (dias_sem_fastpass + 1)) DESC
     LIMIT p_vagas;
 
-    -- 4. Emitir os Bilhetes
+    -- 4. Emitir bilhetes
     INSERT INTO Bilhete_FastPass (data_validade, status_uso, id_sorteio, id_usuario, id_refeitorio)
     SELECT p_data, 'Pendente', v_id_sorteio, id_usuario, p_id_refeitorio
     FROM Temp_Ganhadores;
 
-    -- 5. Atualizar os Pesos (A Punição e a Recompensa)
-    -- Para os não sorteados: aumentar o peso para o dia seguinte.
+    -- 5. Atualizar pesos
     UPDATE Estudante
     SET dias_sem_fastpass = dias_sem_fastpass + 1
     WHERE id_usuario NOT IN (SELECT id_usuario FROM Temp_Ganhadores);
 
-    -- Para os ganhadores: resetar o peso para zero
     UPDATE Estudante
     SET dias_sem_fastpass = 0
     WHERE id_usuario IN (SELECT id_usuario FROM Temp_Ganhadores);
 
-    -- 6. Limpar a memória do servidor
+    -- 6. Limpar tabela temporária
     DROP TEMPORARY TABLE Temp_Ganhadores;
 
 END //
@@ -220,7 +221,7 @@ END //
 DELIMITER ;
 
 -- =======================================================
--- BLOCO DE DML (DATA MANIPULATION LANGUAGE) - POVOAMENTO
+-- DML (DATA MANIPULATION LANGUAGE) - POVOAMENTO
 -- =======================================================
 
 -- 1. Inserindo Campi
@@ -255,7 +256,7 @@ INSERT INTO Restaurante_Universitario (nome_ru, id_campus) VALUES
 ('RU Ceilândia', 3),
 ('RU Planaltina', 4);
 
--- 5. Inserindo Refeitórios (Note que o andar do Salão Único é NULL)
+-- 5. Inserindo Refeitórios (andar NULL para salões únicos)
 INSERT INTO Refeitorio (nome_refeitorio, tipo_servico, andar, id_ru) VALUES 
 ('Salão Térreo Principal', 'Padrão', 0, 1),
 ('Salão Superior', 'Padrão', 1, 1),
@@ -271,29 +272,29 @@ INSERT INTO Catraca (status_operacao, id_refeitorio) VALUES
 ('Em Manutenção', 4),
 ('Ativa', 5);
 
--- 7. Inserindo Usuários RU (15 no total para alimentar as 3 tabelas filhas)
--- O valor 0x89504E47 representa um binário dummy para a foto_perfil
+-- 7. Inserindo Usuários RU (15 registros: 5 de cada tipo)
+-- 0x89504E47 = PNG dummy para foto_perfil
 INSERT INTO Usuario_RU (nome, email, saldo_atual, prioridade_legal, foto_perfil, id_categoria) VALUES 
--- Estudantes (IDs 1 a 5)
+-- IDs 1-5: Estudantes
 ('Antonio Coelho', 'antonio@aluno.unb.br', 50.00, FALSE, 0x89504E47, 1),
 ('Yasmin', 'yasmin@aluno.unb.br', 12.50, FALSE, 0x89504E47, 1),
 ('Vitor', 'vitor@aluno.unb.br', 0.00, TRUE, 0x89504E47, 2),
 ('Rafael', 'rafael@aluno.unb.br', 25.00, FALSE, 0x89504E47, 1),
 ('Felipe', 'felipe@aluno.unb.br', 5.00, FALSE, 0x89504E47, 1),
--- Servidores (IDs 6 a 10)
+-- IDs 6-10: Servidores
 ('Prof. Silva', 'silva@unb.br', 150.00, FALSE, 0x89504E47, 3),
 ('Prof. Costa', 'costa@unb.br', 45.00, FALSE, 0x89504E47, 3),
 ('Tec. Santos', 'santos@unb.br', 90.00, FALSE, 0x89504E47, 3),
 ('Prof. Oliveira', 'oliveira@unb.br', 30.00, FALSE, 0x89504E47, 3),
 ('Tec. Souza', 'souza@unb.br', 15.00, FALSE, 0x89504E47, 3),
--- Visitantes (IDs 11 a 15)
+-- IDs 11-15: Visitantes
 ('Carlos Mendes', 'carlos@email.com', 40.00, FALSE, NULL, 4),
 ('Marcos Rocha', 'marcos@email.com', 20.00, FALSE, NULL, 4),
 ('Julia Lima', 'julia@email.com', 0.00, FALSE, NULL, 4),
 ('Fernanda Alves', 'fernanda@email.com', 60.00, FALSE, NULL, 4),
 ('Roberto Nunes', 'roberto@email.com', 20.00, TRUE, NULL, 4);
 
--- 8. Inserindo Estudantes (Herdam IDs de 1 a 5)
+-- 8. Inserindo Estudantes (FK para IDs 1-5)
 INSERT INTO Estudante (matricula, dias_sem_fastpass, id_usuario) VALUES 
 (221000001, 5, 1),
 (231000002, 2, 2),
@@ -301,7 +302,7 @@ INSERT INTO Estudante (matricula, dias_sem_fastpass, id_usuario) VALUES
 (241000004, 0, 4),
 (221000005, 3, 5);
 
--- 9. Inserindo Servidores (Herdam IDs de 6 a 10)
+-- 9. Inserindo Servidores (FK para IDs 6-10)
 INSERT INTO Servidor_Docente (siape, departamento, id_usuario) VALUES 
 (1122334, 'Ciência da Computação', 6),
 (2233445, 'Matemática', 7),
@@ -309,7 +310,7 @@ INSERT INTO Servidor_Docente (siape, departamento, id_usuario) VALUES
 (4455667, 'Física', 9),
 (5566778, 'Medicina', 10);
 
--- 10. Inserindo Visitantes (Herdam IDs de 11 a 15)
+-- 10. Inserindo Visitantes (FK para IDs 11-15)
 INSERT INTO Visitante (motivo_visita, id_usuario) VALUES 
 ('Palestra Sinapses Abertas', 11),
 ('Competição II Maratona do Cerrado', 12),
@@ -317,7 +318,7 @@ INSERT INTO Visitante (motivo_visita, id_usuario) VALUES
 ('Visita Guiada', 14),
 ('Manutenção Técnica', 15);
 
--- 11. Inserindo Documentação Assistência (PDFs dummy em HEX 0x25504446)
+-- 11. Inserindo Documentação (0x25504446 = "%PDF" dummy)
 INSERT INTO Documentacao_Assistencia (data_envio, status_aprovacao, comprovante_pdf, id_usuario) VALUES 
 ('2026-01-10', 'Aprovado', 0x25504446, 3),
 ('2026-03-15', 'Em Análise', 0x25504446, 2),
@@ -350,10 +351,10 @@ INSERT INTO Bilhete_FastPass (data_validade, status_uso, id_sorteio, id_usuario,
 ('2026-06-28', 'Pendente', 4, 4, 1);
 
 -- =======================================================
--- BLOCO DE DQL (DATA QUERY LANGUAGE) E VIEWS
+-- DQL (DATA QUERY LANGUAGE) - VIEW DE RELATÓRIO
 -- =======================================================
 
--- Criando a View exigida nas especificações do projeto
+-- View: fluxo de pessoas e faturamento por refeitório
 CREATE VIEW vw_relatorio_fluxo_ru AS
 SELECT 
     r.nome_refeitorio, 
