@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RU-Express · usuário</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root {
   --color-void: #000000;
@@ -86,22 +87,39 @@ body {
   gap: var(--spacing-27);
 }
 .profile-avatar {
-  width: 64px; height: 64px;
+  width: 72px; height: 72px;
   border-radius: var(--radius);
   background: var(--color-void);
   border: 1px solid var(--color-graphite);
   display: flex; align-items: center; justify-content: center;
-  font-size: 24px;
+  font-size: 10px;
   color: var(--color-ash);
   flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
 }
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.profile-avatar .placeholder {
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px;
+}
+.profile-avatar .placeholder .icon { font-size: 24px; display: block; }
+.profile-avatar .placeholder .label { font-size: 8px; color: var(--color-ash); margin-top: 2px; display: block; }
+
+.profile-info { flex: 1; }
 .profile-info h1 {
   font-size: 18px;
   font-weight: 400;
   margin-bottom: 2px;
 }
 .profile-info .email { color: var(--color-ash); font-size: 12px; }
-.profile-info .meta { margin-top: 4px; display: flex; gap: var(--spacing-16); font-size: 11px; }
+.profile-info .meta { margin-top: 4px; display: flex; gap: var(--spacing-16); font-size: 11px; flex-wrap: wrap; }
 .profile-info .meta span { color: var(--color-ash); }
 .profile-info .meta strong { color: var(--color-bone); font-weight: 400; }
 
@@ -286,43 +304,30 @@ table.data .right { text-align: right; }
 .modal .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-16); }
 .modal .modal-actions { display: flex; justify-content: flex-end; gap: var(--spacing-16); margin-top: var(--spacing-27); }
 
-/* ---- Tabs ---- */
-.tabs {
-  display: flex; gap: var(--spacing-16); margin-bottom: var(--spacing-19);
-  border-bottom: 1px solid var(--color-graphite);
-  padding-bottom: var(--spacing-16);
-}
-.tab {
-  padding: 6px 14px;
-  border: 1px solid var(--color-graphite);
+/* ---- QR Code Card ---- */
+.qr-card {
+  background: var(--color-carbon);
   border-radius: var(--radius);
-  background: transparent;
-  color: var(--color-ash);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  cursor: default;
-}
-.tab.active {
-  background: var(--color-void);
-  color: var(--color-bone);
-  border-color: var(--color-bone);
-}
-
-/* ---- Status Bar ---- */
-.status-bar {
+  padding: var(--spacing-27);
+  margin-bottom: var(--spacing-32);
   display: flex;
-  gap: var(--spacing-16);
-  margin-bottom: var(--spacing-27);
-  font-size: 11px;
-  color: var(--color-ash);
+  align-items: center;
+  gap: var(--spacing-27);
 }
-.status-bar .dot {
-  display: inline-block;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--color-green);
-  margin-right: 4px;
+.qr-code {
+  width: 120px; height: 120px;
+  background: var(--color-bone);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 8px;
 }
+.qr-code canvas, .qr-code img { width: 100% !important; height: 100% !important; }
+.qr-info .title { font-size: 14px; margin-bottom: 4px; }
+.qr-info .desc { color: var(--color-ash); font-size: 11px; line-height: 1.5; }
+.qr-info .badge { margin-top: 6px; }
 
 /* ---- Divider ---- */
 hr.dash {
@@ -366,6 +371,15 @@ hr.dash {
   cursor: default;
 }
 .amount-pill:hover { color: var(--color-bone); border-color: var(--color-bone); }
+
+/* ---- Photo upload hint ---- */
+.photo-hint {
+  font-size: 10px;
+  color: var(--color-ash);
+  margin-top: 4px;
+  cursor: default;
+}
+.photo-hint:hover { color: var(--color-bone); }
 </style>
 </head>
 <body>
@@ -383,7 +397,12 @@ hr.dash {
 
   <!-- Profile -->
   <div class="profile-card">
-    <div class="profile-avatar">👤</div>
+    <div class="profile-avatar" id="profileAvatar">
+      <div class="placeholder">
+        <span class="icon">📸</span>
+        <span class="label">BLOB · 12 KB</span>
+      </div>
+    </div>
     <div class="profile-info">
       <h1>Antonio Coelho</h1>
       <div class="email">antonio@aluno.unb.br</div>
@@ -391,6 +410,7 @@ hr.dash {
         <span>matrícula <strong>221000001</strong></span>
         <span>categoria <strong>Estudante Padrão</strong></span>
         <span>prioridade legal <strong>—</strong></span>
+        <span class="photo-hint" id="showPhotoHint">📷 0x89504E47</span>
       </div>
     </div>
   </div>
@@ -408,11 +428,26 @@ hr.dash {
     </div>
   </div>
 
-  <!-- Status -->
+  <!-- Status + QR -->
   <div class="status-bar">
     <span><span class="dot"></span>catraca ativa</span>
     <span>último acesso: 25/06/2026 11:30</span>
     <span>2 FastPass pendentes</span>
+  </div>
+
+  <!-- Carteirinha / QR Code Section -->
+  <div class="qr-card">
+    <div class="qr-code" id="qrcode"></div>
+    <div class="qr-info">
+      <div class="title">🎫 Carteirinha Digital</div>
+      <div class="desc">
+        Apresente o QR code na catraca para identificar-se.<br>
+        ID: <strong>USUARIO_001</strong> · Matrícula: <strong>221000001</strong><br>
+        Validade: vinculada ao seu vínculo ativo.
+      </div>
+      <span class="btn btn-sm btn-success" id="btnRegenerateQR">↻ Regenerar QR</span>
+      <span class="btn btn-sm" id="btnDownloadQR">↓ Download</span>
+    </div>
   </div>
 
   <!-- Quick Actions -->
@@ -443,41 +478,6 @@ hr.dash {
     <span class="link">ver todos →</span>
   </div>
 
-  <div class="fastpass-card">
-    <div class="info">
-      <div class="date">26/06/2026 · 12:00–12:10 · Salão Superior</div>
-      <div class="status"><span class="badge badge-yellow">Pendente</span> aguardando uso</div>
-      <div class="ref">Sorteio #002 · almoço</div>
-    </div>
-    <span class="btn btn-sm btn-success">➤ Usar Agora</span>
-  </div>
-
-  <div class="fastpass-card">
-    <div class="info">
-      <div class="date">26/06/2026 · 11:30–11:40 · Salão Térreo</div>
-      <div class="status"><span class="badge badge-yellow">Pendente</span> aguardando uso</div>
-      <div class="ref">Sorteio #002 · almoço</div>
-    </div>
-    <span class="btn btn-sm btn-success">➤ Usar Agora</span>
-  </div>
-
-  <div class="fastpass-card">
-    <div class="info">
-      <div class="date">25/06/2026 · 12:00–12:10 · Salão Térreo</div>
-      <div class="status"><span class="badge badge-green">Utilizado</span> entrada 11:30</div>
-      <div class="ref">Sorteio #001 · almoço</div>
-    </div>
-    <span class="btn btn-sm" style="opacity:0.4;">concluído</span>
-  </div>
-
-  <div class="fastpass-card">
-    <div class="info">
-      <div class="date">27/06/2026 · 12:00–12:10 · Salão Único FGA</div>
-      <div class="status"><span class="badge badge-red">Expirado</span> não utilizado</div>
-      <div class="ref">Sorteio #003 · almoço</div>
-    </div>
-    <span class="btn btn-sm" style="opacity:0.4;">expirado</span>
-  </div>
   <div class="fastpass-card">
     <div class="info">
       <div class="date">26/06/2026 · 12:00–12:10 · Salão Superior</div>
@@ -562,8 +562,8 @@ hr.dash {
         </tr>
         <tr>
           <td>18/06/2026 11:20</td>
-          <td class="tiny">Salão Térreo · #001</td>
-          <td>R$ 2,50</td>
+          <td class="tiny">Rest. Executivo · #003</td>
+          <td>R$ 15,00</td>
           <td>0.720 kg</td>
           <td class="muted">—</td>
         </tr>
@@ -648,13 +648,42 @@ hr.dash {
           <tr><td>24/06 12:15</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
           <tr><td>22/06 11:45</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
           <tr><td>20/06 12:30</td><td class="tiny">Salão Superior #002</td><td>R$ 0,00</td><td class="muted">—</td></tr>
-          <tr><td>18/06 11:20</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td>0.720 kg</td></tr>
+          <tr><td>18/06 11:20</td><td class="tiny">Rest. Executivo #003</td><td>R$ 15,00</td><td>0.720 kg</td></tr>
           <tr><td>15/06 12:00</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
           <tr><td>12/06 11:40</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
         </tbody>
       </table>
       <div class="modal-actions">
         <span class="btn" id="closeAcessos">Fechar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Binary Data Info Modal -->
+  <div class="modal-overlay" id="modalBinaryInfo">
+    <div class="modal">
+      <h2>📷 Foto de Perfil (BLOB)</h2>
+      <p style="color: var(--color-ash); font-size: 12px; margin-bottom: var(--spacing-16);">
+        Dado binário armazenado no banco de dados.
+      </p>
+      <div class="form-group">
+        <label>Tabela</label>
+        <div class="input">Usuario_RU · coluna <strong>foto_perfil</strong></div>
+      </div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <div class="input">BLOB (Binary Large Object)</div>
+      </div>
+      <div class="form-group">
+        <label>Valor HEX (dummy)</label>
+        <div class="input" style="font-size: 11px; word-break: break-all;">0x89504E47 0D0A1A0A 0000000D 49484452 000000...</div>
+      </div>
+      <div class="form-group">
+        <label>Preview simulado</label>
+        <div style="width: 120px; height: 120px; background: var(--color-void); border-radius: var(--radius); border: 1px solid var(--color-graphite); display: flex; align-items: center; justify-content: center; font-size: 48px;">👤</div>
+      </div>
+      <div class="modal-actions">
+        <span class="btn" id="closeBinaryInfo">Fechar</span>
       </div>
     </div>
   </div>
@@ -678,6 +707,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const modalDeposit = document.getElementById('modalDeposit');
   const modalFastPass = document.getElementById('modalFastPass');
   const modalAcessos = document.getElementById('modalAcessos');
+  const modalBinary = document.getElementById('modalBinaryInfo');
 
   // Openers
   document.getElementById('btnDeposit').addEventListener('click', () => modalDeposit.style.display = 'flex');
@@ -685,14 +715,16 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('cardFastPass').addEventListener('click', () => modalFastPass.style.display = 'flex');
   document.getElementById('cardAcessos').addEventListener('click', () => modalAcessos.style.display = 'flex');
   document.getElementById('seeAllAccesses').addEventListener('click', () => modalAcessos.style.display = 'flex');
+  document.getElementById('showPhotoHint').addEventListener('click', () => modalBinary.style.display = 'flex');
 
   // Closers
   document.getElementById('closeDeposit').addEventListener('click', () => modalDeposit.style.display = 'none');
   document.getElementById('closeFastPass').addEventListener('click', () => modalFastPass.style.display = 'none');
   document.getElementById('closeAcessos').addEventListener('click', () => modalAcessos.style.display = 'none');
+  document.getElementById('closeBinaryInfo').addEventListener('click', () => modalBinary.style.display = 'none');
 
   // Close on overlay click
-  [modalDeposit, modalFastPass, modalAcessos].forEach(m => {
+  [modalDeposit, modalFastPass, modalAcessos, modalBinary].forEach(m => {
     m.addEventListener('click', (e) => { if (e.target === m) m.style.display = 'none'; });
   });
 
@@ -705,6 +737,51 @@ document.addEventListener('DOMContentLoaded', function() {
       const val = this.textContent.trim();
       document.querySelector('#modalDeposit .input').textContent = val;
     });
+  });
+
+  // ---- QR Code ----
+  let qrInstance = null;
+  function generateQR(text) {
+    const container = document.getElementById('qrcode');
+    container.innerHTML = '';
+    qrInstance = new QRCode(container, {
+      text: text,
+      width: 104,
+      height: 104,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  // Encode user identity data into QR
+  function getUserQRData() {
+    const payload = {
+      tipo: 'USUARIO_RU',
+      id: 1,
+      nome: 'Antonio Coelho',
+      matricula: '221000001',
+      email: 'antonio@aluno.unb.br',
+      categoria: 1,
+      prioridade: false
+    };
+    return JSON.stringify(payload);
+  }
+
+  generateQR(getUserQRData());
+
+  document.getElementById('btnRegenerateQR').addEventListener('click', function() {
+    generateQR(getUserQRData());
+  });
+
+  document.getElementById('btnDownloadQR').addEventListener('click', function() {
+    const canvas = document.querySelector('#qrcode canvas');
+    if (canvas) {
+      const link = document.createElement('a');
+      link.download = 'carteirinha_221000001.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
   });
 });
 </script>
