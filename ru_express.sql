@@ -136,7 +136,8 @@ CREATE TABLE Acesso_RU (
 
 CREATE TABLE Bilhete_FastPass (
     id_bilhete INT AUTO_INCREMENT,
-    data_validade DATE NOT NULL,
+    horario_inicio DATETIME NOT NULL,
+    horario_fim DATETIME NOT NULL,
     status_uso VARCHAR(100) NOT NULL,
     id_sorteio INT NOT NULL,
     id_usuario INT NOT NULL,
@@ -172,16 +173,20 @@ DELIMITER ;
 DELIMITER //
 
 CREATE PROCEDURE Gerar_Sorteio_FastPass (
-    IN p_data DATE,
+    IN p_horario_inicio DATETIME,
+    IN p_horario_fim DATETIME,
     IN p_vagas INT,
     IN p_id_refeitorio INT
 )
 BEGIN   
     DECLARE v_id_sorteio INT;
+    DECLARE v_data DATE;
+
+    SET v_data = DATE(p_horario_inicio);
 
     -- 1. Registrar o sorteio
     INSERT INTO Sorteio_Diario (data_sorteio, quantidade_vagas)
-    VALUES (p_data, p_vagas);
+    VALUES (v_data, p_vagas);
 
     SET v_id_sorteio = LAST_INSERT_ID();
 
@@ -199,9 +204,9 @@ BEGIN
     ORDER BY POW(RAND(), 1.0 / (dias_sem_fastpass + 1)) DESC
     LIMIT p_vagas;
 
-    -- 4. Emitir bilhetes
-    INSERT INTO Bilhete_FastPass (data_validade, status_uso, id_sorteio, id_usuario, id_refeitorio)
-    SELECT p_data, 'Pendente', v_id_sorteio, id_usuario, p_id_refeitorio
+    -- 4. Emitir bilhetes com janela de horário
+    INSERT INTO Bilhete_FastPass (horario_inicio, horario_fim, status_uso, id_sorteio, id_usuario, id_refeitorio)
+    SELECT p_horario_inicio, p_horario_fim, 'Pendente', v_id_sorteio, id_usuario, p_id_refeitorio
     FROM Temp_Ganhadores;
 
     -- 5. Atualizar pesos
@@ -342,13 +347,13 @@ INSERT INTO Acesso_RU (data_hora_entrada, valor_cobrado, peso_prato_kg, id_usuar
 ('2026-06-25 12:30:00', 20.00, NULL, 11, 5),
 ('2026-06-25 12:45:00', 2.50, NULL, 2, 1);
 
--- 14. Inserindo Bilhetes FastPass
-INSERT INTO Bilhete_FastPass (data_validade, status_uso, id_sorteio, id_usuario, id_refeitorio) VALUES 
-('2026-06-25', 'Utilizado', 1, 1, 1),
-('2026-06-26', 'Pendente', 2, 3, 2),
-('2026-06-26', 'Pendente', 2, 2, 1),
-('2026-06-27', 'Expirado', 3, 5, 4),
-('2026-06-28', 'Pendente', 4, 4, 1);
+-- 14. Inserindo Bilhetes FastPass (com janela de horário)
+INSERT INTO Bilhete_FastPass (horario_inicio, horario_fim, status_uso, id_sorteio, id_usuario, id_refeitorio) VALUES 
+('2026-06-25 12:00:00', '2026-06-25 12:10:00', 'Utilizado', 1, 1, 1),
+('2026-06-26 12:00:00', '2026-06-26 12:10:00', 'Pendente', 2, 3, 2),
+('2026-06-26 11:30:00', '2026-06-26 11:40:00', 'Pendente', 2, 2, 1),
+('2026-06-27 12:00:00', '2026-06-27 12:10:00', 'Expirado', 3, 5, 4),
+('2026-06-28 11:30:00', '2026-06-28 11:40:00', 'Pendente', 4, 4, 1);
 
 -- =======================================================
 -- DQL (DATA QUERY LANGUAGE) - VIEW DE RELATÓRIO
