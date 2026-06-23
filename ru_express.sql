@@ -263,9 +263,13 @@ INSERT INTO Restaurante_Universitario (nome_ru, id_campus) VALUES
 
 -- 5. Inserindo Refeitórios (andar NULL para salões únicos)
 INSERT INTO Refeitorio (nome_refeitorio, tipo_servico, andar, id_ru) VALUES 
-('Salão Térreo Principal', 'Padrão', 0, 1),
-('Salão Superior', 'Padrão', 1, 1),
-('Restaurante Executivo', 'Executivo', 2, 1),
+('Refeitório 1', 'Padrão', 0, 1),
+('Refeitório 2', 'Padrão', 1, 1),
+('Refeitório 3', 'Padrão', 2, 1),
+('Refeitório 4', 'Padrão', 3, 1),
+('Refeitório 5', 'Padrão', 4, 1),
+('Refeitório 6', 'Padrão', 5, 1),
+('Restaurante Executivo', 'Executivo', 7, 1),
 ('Salão Único FGA', 'Padrão', NULL, 3),
 ('Salão Único FCE', 'Padrão', NULL, 4);
 
