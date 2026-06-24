@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RU-Express · usuário</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+  --color-void: #000000;
+  --color-carbon: #1d1d1d;
+  --color-graphite: #383838;
+  --color-ash: #888888;
+  --color-bone: #ffffff;
+  --color-green: #4ade80;
+  --color-red: #f87171;
+  --color-yellow: #facc15;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --radius: 10px;
+  --page-max: 960px;
+  --spacing-16: 16px;
+  --spacing-19: 19px;
+  --spacing-27: 27px;
+  --spacing-32: 32px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--color-void);
+  color: var(--color-bone);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  line-height: 1.4;
+  font-variant-numeric: slashed-zero;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrapper {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--spacing-27);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-19) 0;
+  border-bottom: 1px solid var(--color-graphite);
+  margin-bottom: var(--spacing-32);
+}
+.nav-brand { font-size: 18px; }
+.nav-brand span { color: var(--color-ash); }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-16);
+  font-size: 12px;
+  color: var(--color-ash);
+}
+.nav-link {
+  color: var(--color-ash);
+  cursor: default;
+  padding: 4px 10px;
+  border: 1px solid var(--color-graphite);
+  border-radius: var(--radius);
+  font-size: 11px;
+}
+.nav-link.active {
+  color: var(--color-bone);
+  border-color: var(--color-bone);
+}
+
+.profile-card {
+  background: var(--color-carbon);
+  border-radius: var(--radius);
+  padding: var(--spacing-27);
+  margin-bottom: var(--spacing-27);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-27);
+}
+.profile-avatar {
+  width: 72px; height: 72px;
+  border-radius: var(--radius);
+  background: var(--color-void);
+  border: 1px solid var(--color-graphite);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  color: var(--color-ash);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.profile-avatar .placeholder { text-align: center; line-height: 1.2; padding: 4px; }
+.profile-avatar .placeholder .icon { font-size: 24px; display: block; }
+.profile-avatar .placeholder .label { font-size: 8px; color: var(--color-ash); margin-top: 2px; display: block; }
+
+.profile-info { flex: 1; }
+.profile-info h1 { font-size: 18px; font-weight: 400; margin-bottom: 2px; }
+.profile-info .email { color: var(--color-ash); font-size: 12px; }
+.profile-info .meta { margin-top: 4px; display: flex; gap: var(--spacing-16); font-size: 11px; flex-wrap: wrap; }
+.profile-info .meta span { color: var(--color-ash); }
+.profile-info .meta strong { color: var(--color-bone); font-weight: 400; }
+
+.balance-card {
+  background: var(--color-carbon);
+  border-radius: var(--radius);
+  padding: var(--spacing-27);
+  margin-bottom: var(--spacing-27);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.balance-left .label { color: var(--color-ash); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.balance-left .value { font-size: 42px; line-height: 1; }
+.balance-left .value small { font-size: 18px; color: var(--color-ash); }
+.balance-left .type { color: var(--color-ash); font-size: 11px; margin-top: 4px; }
+.balance-right { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 18px;
+  border: 1px solid var(--color-graphite);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-bone);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: default;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--color-void); }
+.btn-primary { background: var(--color-bone); color: var(--color-void); border-color: var(--color-bone); }
+.btn-primary:hover { background: var(--color-ash); border-color: var(--color-ash); }
+.btn-success { border-color: var(--color-green); color: var(--color-green); }
+.btn-success:hover { background: #1a3b1a; }
+.btn-danger { border-color: var(--color-red); color: var(--color-red); }
+.btn-danger:hover { background: #3b1a1a; }
+.btn-sm { padding: 4px 12px; font-size: 11px; }
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-32);
+}
+.action-card {
+  background: var(--color-carbon);
+  border-radius: var(--radius);
+  padding: var(--spacing-19);
+  text-align: center;
+  cursor: default;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.action-card:hover { border-color: var(--color-graphite); }
+.action-card .icon { font-size: 24px; margin-bottom: 6px; }
+.action-card .title { font-size: 13px; color: var(--color-bone); }
+.action-card .desc { font-size: 10px; color: var(--color-ash); margin-top: 2px; }
+
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-16); }
+.section-header h2 { font-size: 14px; font-weight: 400; }
+.section-header .link { color: var(--color-ash); font-size: 11px; cursor: default; }
+.section-header .link:hover { color: var(--color-bone); }
+
+.table-container { background: var(--color-carbon); border-radius: var(--radius); overflow: hidden; margin-bottom: var(--spacing-32); }
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.data th { text-align: left; padding: 10px var(--spacing-16); background: rgba(255,255,255,0.04); color: var(--color-ash); font-weight: 400; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--color-graphite); }
+table.data td { padding: 8px var(--spacing-16); border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--color-bone); font-size: 12px; }
+table.data tr:last-child td { border-bottom: none; }
+table.data tr:hover td { background: rgba(255,255,255,0.02); }
+table.data .muted { color: var(--color-ash); }
+table.data .tiny { font-size: 11px; color: var(--color-ash); }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; border: 1px solid var(--color-graphite); }
+.badge-green { border-color: var(--color-green); color: var(--color-green); }
+.badge-red { border-color: var(--color-red); color: var(--color-red); }
+.badge-yellow { border-color: var(--color-yellow); color: var(--color-yellow); }
+.badge-gray { border-color: var(--color-ash); color: var(--color-ash); }
+
+.fastpass-card { background: var(--color-carbon); border-radius: var(--radius); padding: var(--spacing-19); margin-bottom: var(--spacing-16); display: flex; justify-content: space-between; align-items: center; }
+.fastpass-card .info .date { font-size: 14px; }
+.fastpass-card .info .status { font-size: 11px; color: var(--color-ash); margin-top: 2px; }
+.fastpass-card .info .ref { font-size: 10px; color: var(--color-ash); }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 100; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--color-carbon); border-radius: var(--radius); padding: var(--spacing-27); max-width: 440px; width: 100%; border: 1px solid var(--color-graphite); }
+.modal h2 { font-size: 16px; font-weight: 400; margin-bottom: var(--spacing-19); }
+.modal .form-group { margin-bottom: var(--spacing-16); }
+.modal .form-group label { display: block; color: var(--color-ash); font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.modal .form-group .input { display: block; width: 100%; padding: 8px 12px; background: var(--color-void); border: 1px solid var(--color-graphite); border-radius: var(--radius); color: var(--color-bone); font-family: var(--font-mono); font-size: 13px; }
+.modal .form-group .input::placeholder { color: var(--color-ash); }
+.modal .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-16); }
+.modal .modal-actions { display: flex; justify-content: flex-end; gap: var(--spacing-16); margin-top: var(--spacing-27); }
+
+.qr-card { background: var(--color-carbon); border-radius: var(--radius); padding: var(--spacing-27); margin-bottom: var(--spacing-32); display: flex; align-items: center; gap: var(--spacing-27); }
+.qr-code { width: 120px; height: 120px; background: var(--color-bone); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 8px; }
+.qr-code canvas, .qr-code img { width: 100% !important; height: 100% !important; }
+.qr-info .title { font-size: 14px; margin-bottom: 4px; }
+.qr-info .desc { color: var(--color-ash); font-size: 11px; line-height: 1.5; }
+
+.status-bar { display: flex; gap: var(--spacing-16); margin-bottom: var(--spacing-27); font-size: 11px; color: var(--color-ash); }
+.status-bar .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-green); margin-right: 4px; }
+
+hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: var(--spacing-32) 0; }
+.footer { padding: var(--spacing-27) 0; border-top: 1px solid var(--color-graphite); color: var(--color-ash); font-size: 11px; display: flex; justify-content: space-between; }
+.admin-toggle { margin-bottom: var(--spacing-32); text-align: right; font-size: 10px; color: var(--color-graphite); cursor: default; }
+.admin-toggle:hover { color: var(--color-ash); }
+
+.amount-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.amount-pill { padding: 4px 12px; border: 1px solid var(--color-graphite); border-radius: var(--radius); font-family: var(--font-mono); font-size: 12px; color: var(--color-ash); background: transparent; cursor: default; }
+.amount-pill:hover { color: var(--color-bone); border-color: var(--color-bone); }
+
+.photo-hint { font-size: 10px; color: var(--color-ash); margin-top: 4px; cursor: default; }
+.photo-hint:hover { color: var(--color-bone); }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <div class="nav">
+    <div class="nav-brand"><span>≡</span> RU·EXPRESS</div>
+    <div class="nav-right">
+      <span class="nav-link active">👤 usuário</span>
+      <span class="nav-link">⚙ admin</span>
+    </div>
+  </div>
+
+  <div class="profile-card">
+    <div class="profile-avatar" id="profileAvatar">
+      <div class="placeholder">
+        <span class="icon">📸</span>
+        <span class="label">BLOB · 12 KB</span>
+      </div>
+    </div>
+    <div class="profile-info">
+      <h1>Antonio Coelho</h1>
+      <div class="email">antonio@aluno.unb.br</div>
+      <div class="meta">
+        <span>matrícula <strong>221000001</strong></span>
+        <span>categoria <strong>Estudante Padrão</strong></span>
+        <span>prioridade legal <strong>—</strong></span>
+        <span class="photo-hint" id="showPhotoHint">📷 0x89504E47</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="balance-card">
+    <div class="balance-left">
+      <div class="label">Saldo Disponível</div>
+      <div class="value">R$ 50<small>,00</small></div>
+      <div class="type">Válido para refeições e desjejuns</div>
+    </div>
+    <div class="balance-right">
+      <span class="btn btn-primary" id="btnDeposit">+ Recarregar Saldo</span>
+      <span class="btn btn-sm" id="btnHistory">📋 Extrato</span>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span><span class="dot"></span>catraca ativa</span>
+    <span>último acesso: 25/06/2026 11:30</span>
+    <span>2 FastPass pendentes</span>
+  </div>
+
+  <div class="qr-card">
+    <div class="qr-code" id="qrcode"></div>
+    <div class="qr-info">
+      <div class="title">🎫 Carteirinha Digital</div>
+      <div class="desc">
+        Apresente o QR code na catraca para identificar-se.<br>
+        ID: <strong>USUARIO_001</strong> · Matrícula: <strong>221000001</strong><br>
+        Validade: vinculada ao seu vínculo ativo.
+      </div>
+      <span class="btn btn-sm btn-success" id="btnRegenerateQR">↻ Regenerar QR</span>
+      <span class="btn btn-sm" id="btnDownloadQR">↓ Download</span>
+    </div>
+  </div>
+
+  <div class="section-header"><h2>AÇÕES RÁPIDAS</h2></div>
+  <div class="quick-actions">
+    <div class="action-card" id="cardFastPass">
+      <div class="icon">🎫</div>
+      <div class="title">Solicitar FastPass</div>
+      <div class="desc">Participe do sorteio de vagas</div>
+    </div>
+    <div class="action-card" id="cardAcessos">
+      <div class="icon">🚪</div>
+      <div class="title">Últimos Acessos</div>
+      <div class="desc">Seu histórico de entradas</div>
+    </div>
+    <div class="action-card" id="cardDeposit">
+      <div class="icon">💰</div>
+      <div class="title">Depositar</div>
+      <div class="desc">Adicione créditos via PIX</div>
+    </div>
+  </div>
+
+  <div class="section-header"><h2>MEUS FASTPASS</h2><span class="link">ver todos →</span></div>
+
+  <div class="fastpass-card">
+    <div class="info">
+      <div class="date">25/06/2026 · 11:30–11:40 · Refeitório 1</div>
+      <div class="status"><span class="badge badge-green">Utilizado</span> entrada 11:30</div>
+      <div class="ref">Sorteio #001 · 20 vagas</div>
+    </div>
+    <span class="btn btn-sm" style="opacity:0.4;">concluído</span>
+  </div>
+
+  <div class="fastpass-card">
+    <div class="info">
+      <div class="date">25/06/2026 · 12:00–12:10 · Refeitório 2</div>
+      <div class="status"><span class="badge badge-green">Utilizado</span> entrada 12:00</div>
+      <div class="ref">Sorteio #002 · 30 vagas</div>
+    </div>
+    <span class="btn btn-sm" style="opacity:0.4;">concluído</span>
+  </div>
+
+  <div class="fastpass-card">
+    <div class="info">
+      <div class="date">26/06/2026 · 11:30–11:40 · Refeitório 1</div>
+      <div class="status"><span class="badge badge-yellow">Pendente</span> aguardando uso</div>
+      <div class="ref">Sorteio #003 · 25 vagas</div>
+    </div>
+    <span class="btn btn-sm btn-success">➤ Usar Agora</span>
+  </div>
+
+  <div class="fastpass-card">
+    <div class="info">
+      <div class="date">26/06/2026 · 12:00–12:10 · Refeitório 2</div>
+      <div class="status"><span class="badge badge-yellow">Pendente</span> aguardando uso</div>
+      <div class="ref">Sorteio #004 · 35 vagas</div>
+    </div>
+    <span class="btn btn-sm btn-success">➤ Usar Agora</span>
+  </div>
+
+  <div class="fastpass-card">
+    <div class="info">
+      <div class="date">27/06/2026 · 12:00–12:10 · Refeitório 4</div>
+      <div class="status"><span class="badge badge-red">Expirado</span> não utilizado</div>
+      <div class="ref">Sorteio #005 · 50 vagas</div>
+    </div>
+    <span class="btn btn-sm" style="opacity:0.4;">expirado</span>
+  </div>
+
+  <div class="section-header" style="margin-top: var(--spacing-16);">
+    <h2>ÚLTIMOS ACESSOS</h2>
+    <span class="link" id="seeAllAccesses">ver todos →</span>
+  </div>
+
+  <div class="table-container">
+    <table class="data">
+      <thead>
+        <tr><th>Data / Hora</th><th>Catraca</th><th>Valor</th><th>Peso</th><th>FastPass</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>25/06/2026 11:30</td><td class="tiny">Refeitório 1 · #001</td><td>R$ 2,50</td><td class="muted">—</td><td><span class="badge badge-green">✓</span></td></tr>
+        <tr><td>24/06/2026 12:15</td><td class="tiny">Refeitório 1 · #001</td><td>R$ 2,50</td><td class="muted">—</td><td class="muted">—</td></tr>
+        <tr><td>22/06/2026 11:45</td><td class="tiny">Refeitório 1 · #001</td><td>R$ 2,50</td><td class="muted">—</td><td class="muted">—</td></tr>
+        <tr><td>20/06/2026 12:30</td><td class="tiny">Refeitório 2 · #002</td><td>R$ 0,00</td><td class="muted">—</td><td><span class="badge badge-green">✓</span></td></tr>
+        <tr><td>18/06/2026 11:20</td><td class="tiny">Rest. Executivo · #006</td><td>R$ 15,00</td><td>0.720 kg</td><td class="muted">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Deposit Modal -->
+  <div class="modal-overlay" id="modalDeposit">
+    <div class="modal">
+      <h2>💰 Recarregar Saldo</h2>
+      <div class="form-group">
+        <label>Valor (R$)</label>
+        <div class="input" style="font-size: 28px; padding: 12px; color: var(--color-bone);">R$ 0,00</div>
+        <div class="amount-picker">
+          <span class="amount-pill">R$ 10</span>
+          <span class="amount-pill">R$ 20</span>
+          <span class="amount-pill">R$ 50</span>
+          <span class="amount-pill">R$ 100</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Método de Pagamento</label>
+        <div class="input">PIX (QR Code)</div>
+      </div>
+      <div class="form-group">
+        <label>Forma de pagamento</label>
+        <div style="color: var(--color-ash); font-size: 12px; padding: 12px; border: 1px dashed var(--color-graphite); border-radius: var(--radius); text-align: center;">
+          ┌─ PIX ─────────────────────┐<br>
+          │  000201010211...           │<br>
+          │  (QR Code simulado)        │<br>
+          └────────────────────────────┘
+        </div>
+      </div>
+      <div class="modal-actions">
+        <span class="btn" id="closeDeposit">Cancelar</span>
+        <span class="btn btn-primary">Confirmar Recarga</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FastPass Request Modal -->
+  <div class="modal-overlay" id="modalFastPass">
+    <div class="modal">
+      <h2>🎫 Solicitar FastPass</h2>
+      <p style="color: var(--color-ash); font-size: 12px; margin-bottom: var(--spacing-19);">
+        Você será inscrito no sorteio ponderado. Quanto mais dias sem ganhar, maiores suas chances.
+      </p>
+      <div class="form-group">
+        <label>Data</label>
+        <div class="input">27/06/2026</div>
+      </div>
+      <div class="form-group">
+        <label>Refeitório</label>
+        <div class="input">Refeitório 1 · RU Central Darcy</div>
+      </div>
+      <div class="form-group">
+        <label>Refeição</label>
+        <div class="input">Almoço (11:30 — 14:00)</div>
+      </div>
+      <div style="color: var(--color-ash); font-size: 11px; padding: var(--spacing-16); border: 1px solid var(--color-graphite); border-radius: var(--radius); margin-bottom: var(--spacing-16);">
+        <strong style="color:var(--color-bone);">Sua situação atual:</strong><br>
+        Dias sem FastPass: 2 · Chances: médias
+      </div>
+      <div class="modal-actions">
+        <span class="btn" id="closeFastPass">Cancelar</span>
+        <span class="btn btn-primary">Participar do Sorteio</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Access History Modal -->
+  <div class="modal-overlay" id="modalAcessos">
+    <div class="modal" style="max-width: 560px;">
+      <h2>🚪 Histórico de Acessos</h2>
+      <table class="data">
+        <thead>
+          <tr><th>Data</th><th>Catraca</th><th>Valor</th><th>Peso</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>25/06 11:30</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+          <tr><td>24/06 12:15</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+          <tr><td>22/06 11:45</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+          <tr><td>20/06 12:30</td><td class="tiny">Refeitório 2 #002</td><td>R$ 0,00</td><td class="muted">—</td></tr>
+          <tr><td>18/06 11:20</td><td class="tiny">Rest. Executivo #006</td><td>R$ 15,00</td><td>0.720 kg</td></tr>
+          <tr><td>15/06 12:00</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+          <tr><td>12/06 11:40</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+        </tbody>
+      </table>
+      <div class="modal-actions">
+        <span class="btn" id="closeAcessos">Fechar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Binary Data Info Modal -->
+  <div class="modal-overlay" id="modalBinaryInfo">
+    <div class="modal">
+      <h2>📷 Foto de Perfil (BLOB)</h2>
+      <p style="color: var(--color-ash); font-size: 12px; margin-bottom: var(--spacing-16);">
+        Dado binário armazenado no banco de dados.
+      </p>
+      <div class="form-group">
+        <label>Tabela</label>
+        <div class="input">Usuario_RU · coluna <strong>foto_perfil</strong></div>
+      </div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <div class="input">BLOB (Binary Large Object)</div>
+      </div>
+      <div class="form-group">
+        <label>Valor HEX (dummy)</label>
+        <div class="input" style="font-size: 11px; word-break: break-all;">0x89504E47 0D0A1A0A 0000000D 49484452 000000...</div>
+      </div>
+      <div class="form-group">
+        <label>Preview simulado</label>
+        <div style="width: 120px; height: 120px; background: var(--color-void); border-radius: var(--radius); border: 1px solid var(--color-graphite); display: flex; align-items: center; justify-content: center; font-size: 48px;">👤</div>
+      </div>
+      <div class="modal-actions">
+        <span class="btn" id="closeBinaryInfo">Fechar</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="dash">
+  <div class="admin-toggle">acesso administrador → painel de controle</div>
+  <div class="footer">
+    <span>RU-Express · Banco de Dados 2026/1</span>
+    <span>UnB · FGA · v1.0</span>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const modalDeposit = document.getElementById('modalDeposit');
+  const modalFastPass = document.getElementById('modalFastPass');
+  const modalAcessos = document.getElementById('modalAcessos');
+  const modalBinary = document.getElementById('modalBinaryInfo');
+
+  document.getElementById('btnDeposit').addEventListener('click', () => modalDeposit.style.display = 'flex');
+  document.getElementById('cardDeposit').addEventListener('click', () => modalDeposit.style.display = 'flex');
+  document.getElementById('cardFastPass').addEventListener('click', () => modalFastPass.style.display = 'flex');
+  document.getElementById('cardAcessos').addEventListener('click', () => modalAcessos.style.display = 'flex');
+  document.getElementById('seeAllAccesses').addEventListener('click', () => modalAcessos.style.display = 'flex');
+  document.getElementById('showPhotoHint').addEventListener('click', () => modalBinary.style.display = 'flex');
+
+  document.getElementById('closeDeposit').addEventListener('click', () => modalDeposit.style.display = 'none');
+  document.getElementById('closeFastPass').addEventListener('click', () => modalFastPass.style.display = 'none');
+  document.getElementById('closeAcessos').addEventListener('click', () => modalAcessos.style.display = 'none');
+  document.getElementById('closeBinaryInfo').addEventListener('click', () => modalBinary.style.display = 'none');
+
+  [modalDeposit, modalFastPass, modalAcessos, modalBinary].forEach(m => {
+    m.addEventListener('click', (e) => { if (e.target === m) m.style.display = 'none'; });
+  });
+
+  document.querySelectorAll('.amount-pill').forEach(pill => {
+    pill.addEventListener('click', function() {
+      document.querySelectorAll('.amount-pill').forEach(p => p.style.color = '');
+      this.style.color = 'var(--color-bone)';
+      this.style.borderColor = 'var(--color-bone)';
+      document.querySelector('#modalDeposit .input').textContent = this.textContent.trim();
+    });
+  });
+
+  let qrInstance = null;
+  function generateQR(text) {
+    const container = document.getElementById('qrcode');
+    container.innerHTML = '';
+    qrInstance = new QRCode(container, { text, width: 104, height: 104, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  }
+  function getUserQRData() {
+    return JSON.stringify({ tipo: 'USUARIO_RU', id: 1, nome: 'Antonio Coelho', matricula: '221000001', email: 'antonio@aluno.unb.br', categoria: 1, prioridade: false });
+  }
+  generateQR(getUserQRData());
+  document.getElementById('btnRegenerateQR').addEventListener('click', () => generateQR(getUserQRData()));
+  document.getElementById('btnDownloadQR').addEventListener('click', () => {
+    const canvas = document.querySelector('#qrcode canvas');
+    if (canvas) { const link = document.createElement('a'); link.download = 'carteirinha_221000001.png'; link.href = canvas.toDataURL('image/png'); link.click(); }
+  });
+});
+</script>
+
+</body>
+</html>
