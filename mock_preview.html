@@ -45,7 +45,6 @@ body {
   padding: 0 var(--spacing-27);
 }
 
-/* ---- Navigation ---- */
 .nav {
   display: flex;
   align-items: center;
@@ -76,7 +75,6 @@ body {
   border-color: var(--color-bone);
 }
 
-/* ---- Profile Card ---- */
 .profile-card {
   background: var(--color-carbon);
   border-radius: var(--radius);
@@ -98,32 +96,18 @@ body {
   overflow: hidden;
   position: relative;
 }
-.profile-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.profile-avatar .placeholder {
-  text-align: center;
-  line-height: 1.2;
-  padding: 4px;
-}
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.profile-avatar .placeholder { text-align: center; line-height: 1.2; padding: 4px; }
 .profile-avatar .placeholder .icon { font-size: 24px; display: block; }
 .profile-avatar .placeholder .label { font-size: 8px; color: var(--color-ash); margin-top: 2px; display: block; }
 
 .profile-info { flex: 1; }
-.profile-info h1 {
-  font-size: 18px;
-  font-weight: 400;
-  margin-bottom: 2px;
-}
+.profile-info h1 { font-size: 18px; font-weight: 400; margin-bottom: 2px; }
 .profile-info .email { color: var(--color-ash); font-size: 12px; }
 .profile-info .meta { margin-top: 4px; display: flex; gap: var(--spacing-16); font-size: 11px; flex-wrap: wrap; }
 .profile-info .meta span { color: var(--color-ash); }
 .profile-info .meta strong { color: var(--color-bone); font-weight: 400; }
 
-/* ---- Balance Card ---- */
 .balance-card {
   background: var(--color-carbon);
   border-radius: var(--radius);
@@ -137,14 +121,8 @@ body {
 .balance-left .value { font-size: 42px; line-height: 1; }
 .balance-left .value small { font-size: 18px; color: var(--color-ash); }
 .balance-left .type { color: var(--color-ash); font-size: 11px; margin-top: 4px; }
-.balance-right {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-end;
-}
+.balance-right { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
 
-/* ---- Buttons ---- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 8px 18px;
@@ -159,23 +137,14 @@ body {
   white-space: nowrap;
 }
 .btn:hover { background: var(--color-void); }
-.btn-primary {
-  background: var(--color-bone);
-  color: var(--color-void);
-  border-color: var(--color-bone);
-}
+.btn-primary { background: var(--color-bone); color: var(--color-void); border-color: var(--color-bone); }
 .btn-primary:hover { background: var(--color-ash); border-color: var(--color-ash); }
 .btn-success { border-color: var(--color-green); color: var(--color-green); }
 .btn-success:hover { background: #1a3b1a; }
 .btn-danger { border-color: var(--color-red); color: var(--color-red); }
 .btn-danger:hover { background: #3b1a1a; }
+.btn-sm { padding: 4px 12px; font-size: 11px; }
 
-.btn-sm {
-  padding: 4px 12px;
-  font-size: 11px;
-}
-
-/* ---- Quick Actions ---- */
 .quick-actions {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -196,189 +165,61 @@ body {
 .action-card .title { font-size: 13px; color: var(--color-bone); }
 .action-card .desc { font-size: 10px; color: var(--color-ash); margin-top: 2px; }
 
-/* ---- Section Titles ---- */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-16);
-}
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-16); }
 .section-header h2 { font-size: 14px; font-weight: 400; }
 .section-header .link { color: var(--color-ash); font-size: 11px; cursor: default; }
 .section-header .link:hover { color: var(--color-bone); }
 
-/* ---- Data Table Compact ---- */
-.table-container {
-  background: var(--color-carbon);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-bottom: var(--spacing-32);
-}
-table.data {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-table.data th {
-  text-align: left;
-  padding: 10px var(--spacing-16);
-  background: rgba(255,255,255,0.04);
-  color: var(--color-ash);
-  font-weight: 400;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid var(--color-graphite);
-}
-table.data td {
-  padding: 8px var(--spacing-16);
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  color: var(--color-bone);
-  font-size: 12px;
-}
+.table-container { background: var(--color-carbon); border-radius: var(--radius); overflow: hidden; margin-bottom: var(--spacing-32); }
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.data th { text-align: left; padding: 10px var(--spacing-16); background: rgba(255,255,255,0.04); color: var(--color-ash); font-weight: 400; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--color-graphite); }
+table.data td { padding: 8px var(--spacing-16); border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--color-bone); font-size: 12px; }
 table.data tr:last-child td { border-bottom: none; }
 table.data tr:hover td { background: rgba(255,255,255,0.02); }
 table.data .muted { color: var(--color-ash); }
 table.data .tiny { font-size: 11px; color: var(--color-ash); }
-table.data .right { text-align: right; }
 
-/* ---- Badges ---- */
-.badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 10px;
-  border: 1px solid var(--color-graphite);
-}
+.badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; border: 1px solid var(--color-graphite); }
 .badge-green { border-color: var(--color-green); color: var(--color-green); }
 .badge-red { border-color: var(--color-red); color: var(--color-red); }
 .badge-yellow { border-color: var(--color-yellow); color: var(--color-yellow); }
 .badge-gray { border-color: var(--color-ash); color: var(--color-ash); }
 
-/* ---- FastPass Card ---- */
-.fastpass-card {
-  background: var(--color-carbon);
-  border-radius: var(--radius);
-  padding: var(--spacing-19);
-  margin-bottom: var(--spacing-16);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.fastpass-card { background: var(--color-carbon); border-radius: var(--radius); padding: var(--spacing-19); margin-bottom: var(--spacing-16); display: flex; justify-content: space-between; align-items: center; }
 .fastpass-card .info .date { font-size: 14px; }
 .fastpass-card .info .status { font-size: 11px; color: var(--color-ash); margin-top: 2px; }
 .fastpass-card .info .ref { font-size: 10px; color: var(--color-ash); }
 
-/* ---- Modal ---- */
-.modal-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.85);
-  align-items: center; justify-content: center;
-  z-index: 100;
-}
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 100; }
 .modal-overlay.show { display: flex; }
-.modal {
-  background: var(--color-carbon);
-  border-radius: var(--radius);
-  padding: var(--spacing-27);
-  max-width: 440px;
-  width: 100%;
-  border: 1px solid var(--color-graphite);
-}
+.modal { background: var(--color-carbon); border-radius: var(--radius); padding: var(--spacing-27); max-width: 440px; width: 100%; border: 1px solid var(--color-graphite); }
 .modal h2 { font-size: 16px; font-weight: 400; margin-bottom: var(--spacing-19); }
 .modal .form-group { margin-bottom: var(--spacing-16); }
 .modal .form-group label { display: block; color: var(--color-ash); font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
-.modal .form-group .input {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--color-void);
-  border: 1px solid var(--color-graphite);
-  border-radius: var(--radius);
-  color: var(--color-bone);
-  font-family: var(--font-mono);
-  font-size: 13px;
-}
+.modal .form-group .input { display: block; width: 100%; padding: 8px 12px; background: var(--color-void); border: 1px solid var(--color-graphite); border-radius: var(--radius); color: var(--color-bone); font-family: var(--font-mono); font-size: 13px; }
 .modal .form-group .input::placeholder { color: var(--color-ash); }
 .modal .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-16); }
 .modal .modal-actions { display: flex; justify-content: flex-end; gap: var(--spacing-16); margin-top: var(--spacing-27); }
 
-/* ---- QR Code Card ---- */
-.qr-card {
-  background: var(--color-carbon);
-  border-radius: var(--radius);
-  padding: var(--spacing-27);
-  margin-bottom: var(--spacing-32);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-27);
-}
-.qr-code {
-  width: 120px; height: 120px;
-  background: var(--color-bone);
-  border-radius: var(--radius);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 8px;
-}
+.qr-card { background: var(--color-carbon); border-radius: var(--radius); padding: var(--spacing-27); margin-bottom: var(--spacing-32); display: flex; align-items: center; gap: var(--spacing-27); }
+.qr-code { width: 120px; height: 120px; background: var(--color-bone); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 8px; }
 .qr-code canvas, .qr-code img { width: 100% !important; height: 100% !important; }
 .qr-info .title { font-size: 14px; margin-bottom: 4px; }
 .qr-info .desc { color: var(--color-ash); font-size: 11px; line-height: 1.5; }
-.qr-info .badge { margin-top: 6px; }
 
-/* ---- Divider ---- */
-hr.dash {
-  border: none;
-  border-top: 1px dashed var(--color-graphite);
-  margin: var(--spacing-32) 0;
-}
+.status-bar { display: flex; gap: var(--spacing-16); margin-bottom: var(--spacing-27); font-size: 11px; color: var(--color-ash); }
+.status-bar .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-green); margin-right: 4px; }
 
-/* ---- Footer ---- */
-.footer {
-  padding: var(--spacing-27) 0;
-  border-top: 1px solid var(--color-graphite);
-  color: var(--color-ash);
-  font-size: 11px;
-  display: flex;
-  justify-content: space-between;
-}
-
-/* ---- Admin link subtle ---- */
-.admin-toggle {
-  margin-bottom: var(--spacing-32);
-  text-align: right;
-  font-size: 10px;
-  color: var(--color-graphite);
-  cursor: default;
-}
+hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: var(--spacing-32) 0; }
+.footer { padding: var(--spacing-27) 0; border-top: 1px solid var(--color-graphite); color: var(--color-ash); font-size: 11px; display: flex; justify-content: space-between; }
+.admin-toggle { margin-bottom: var(--spacing-32); text-align: right; font-size: 10px; color: var(--color-graphite); cursor: default; }
 .admin-toggle:hover { color: var(--color-ash); }
 
-/* ---- PIX amount quick pick ---- */
-.amount-picker {
-  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;
-}
-.amount-pill {
-  padding: 4px 12px;
-  border: 1px solid var(--color-graphite);
-  border-radius: var(--radius);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--color-ash);
-  background: transparent;
-  cursor: default;
-}
+.amount-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.amount-pill { padding: 4px 12px; border: 1px solid var(--color-graphite); border-radius: var(--radius); font-family: var(--font-mono); font-size: 12px; color: var(--color-ash); background: transparent; cursor: default; }
 .amount-pill:hover { color: var(--color-bone); border-color: var(--color-bone); }
 
-/* ---- Photo upload hint ---- */
-.photo-hint {
-  font-size: 10px;
-  color: var(--color-ash);
-  margin-top: 4px;
-  cursor: default;
-}
+.photo-hint { font-size: 10px; color: var(--color-ash); margin-top: 4px; cursor: default; }
 .photo-hint:hover { color: var(--color-bone); }
 </style>
 </head>
@@ -386,7 +227,6 @@ hr.dash {
 
 <div class="wrapper">
 
-  <!-- Navigation -->
   <div class="nav">
     <div class="nav-brand"><span>≡</span> RU·EXPRESS</div>
     <div class="nav-right">
@@ -395,7 +235,6 @@ hr.dash {
     </div>
   </div>
 
-  <!-- Profile -->
   <div class="profile-card">
     <div class="profile-avatar" id="profileAvatar">
       <div class="placeholder">
@@ -415,7 +254,6 @@ hr.dash {
     </div>
   </div>
 
-  <!-- Balance -->
   <div class="balance-card">
     <div class="balance-left">
       <div class="label">Saldo Disponível</div>
@@ -428,14 +266,12 @@ hr.dash {
     </div>
   </div>
 
-  <!-- Status + QR -->
   <div class="status-bar">
     <span><span class="dot"></span>catraca ativa</span>
     <span>último acesso: 25/06/2026 11:30</span>
     <span>2 FastPass pendentes</span>
   </div>
 
-  <!-- Carteirinha / QR Code Section -->
   <div class="qr-card">
     <div class="qr-code" id="qrcode"></div>
     <div class="qr-info">
@@ -450,10 +286,7 @@ hr.dash {
     </div>
   </div>
 
-  <!-- Quick Actions -->
-  <div class="section-header">
-    <h2>AÇÕES RÁPIDAS</h2>
-  </div>
+  <div class="section-header"><h2>AÇÕES RÁPIDAS</h2></div>
   <div class="quick-actions">
     <div class="action-card" id="cardFastPass">
       <div class="icon">🎫</div>
@@ -472,15 +305,11 @@ hr.dash {
     </div>
   </div>
 
-  <!-- FastPass Section -->
-  <div class="section-header">
-    <h2>MEUS FASTPASS</h2>
-    <span class="link">ver todos →</span>
-  </div>
+  <div class="section-header"><h2>MEUS FASTPASS</h2><span class="link">ver todos →</span></div>
 
   <div class="fastpass-card">
     <div class="info">
-      <div class="date">26/06/2026 · 12:00–12:10 · Salão Superior</div>
+      <div class="date">26/06/2026 · 12:00–12:10 · Refeitório 2</div>
       <div class="status"><span class="badge badge-yellow">Pendente</span> aguardando uso</div>
       <div class="ref">Sorteio #002 · almoço</div>
     </div>
@@ -489,7 +318,7 @@ hr.dash {
 
   <div class="fastpass-card">
     <div class="info">
-      <div class="date">26/06/2026 · 11:30–11:40 · Salão Térreo</div>
+      <div class="date">26/06/2026 · 11:30–11:40 · Refeitório 3</div>
       <div class="status"><span class="badge badge-yellow">Pendente</span> aguardando uso</div>
       <div class="ref">Sorteio #002 · almoço</div>
     </div>
@@ -498,7 +327,7 @@ hr.dash {
 
   <div class="fastpass-card">
     <div class="info">
-      <div class="date">25/06/2026 · 12:00–12:10 · Salão Térreo</div>
+      <div class="date">25/06/2026 · 12:00–12:10 · Refeitório 1</div>
       <div class="status"><span class="badge badge-green">Utilizado</span> entrada 11:30</div>
       <div class="ref">Sorteio #001 · almoço</div>
     </div>
@@ -507,14 +336,22 @@ hr.dash {
 
   <div class="fastpass-card">
     <div class="info">
-      <div class="date">27/06/2026 · 12:00–12:10 · Salão Único FGA</div>
+      <div class="date">27/06/2026 · 12:00–12:10 · Refeitório 5</div>
       <div class="status"><span class="badge badge-red">Expirado</span> não utilizado</div>
       <div class="ref">Sorteio #003 · almoço</div>
     </div>
     <span class="btn btn-sm" style="opacity:0.4;">expirado</span>
   </div>
 
-  <!-- Last Accesses -->
+  <div class="fastpass-card">
+    <div class="info">
+      <div class="date">28/06/2026 · 11:30–11:40 · Restaurante Executivo</div>
+      <div class="status"><span class="badge badge-yellow">Pendente</span> aguardando uso</div>
+      <div class="ref">Sorteio #004 · almoço</div>
+    </div>
+    <span class="btn btn-sm btn-success">➤ Usar Agora</span>
+  </div>
+
   <div class="section-header" style="margin-top: var(--spacing-16);">
     <h2>ÚLTIMOS ACESSOS</h2>
     <span class="link" id="seeAllAccesses">ver todos →</span>
@@ -523,50 +360,14 @@ hr.dash {
   <div class="table-container">
     <table class="data">
       <thead>
-        <tr>
-          <th>Data / Hora</th>
-          <th>Catraca</th>
-          <th>Valor</th>
-          <th>Peso</th>
-          <th>FastPass</th>
-        </tr>
+        <tr><th>Data / Hora</th><th>Catraca</th><th>Valor</th><th>Peso</th><th>FastPass</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td>25/06/2026 11:30</td>
-          <td class="tiny">Salão Térreo · #001</td>
-          <td>R$ 2,50</td>
-          <td class="muted">—</td>
-          <td><span class="badge badge-green">✓</span></td>
-        </tr>
-        <tr>
-          <td>24/06/2026 12:15</td>
-          <td class="tiny">Salão Térreo · #001</td>
-          <td>R$ 2,50</td>
-          <td class="muted">—</td>
-          <td class="muted">—</td>
-        </tr>
-        <tr>
-          <td>22/06/2026 11:45</td>
-          <td class="tiny">Salão Térreo · #001</td>
-          <td>R$ 2,50</td>
-          <td class="muted">—</td>
-          <td class="muted">—</td>
-        </tr>
-        <tr>
-          <td>20/06/2026 12:30</td>
-          <td class="tiny">Salão Superior · #002</td>
-          <td>R$ 0,00</td>
-          <td class="muted">—</td>
-          <td><span class="badge badge-green">✓</span></td>
-        </tr>
-        <tr>
-          <td>18/06/2026 11:20</td>
-          <td class="tiny">Rest. Executivo · #003</td>
-          <td>R$ 15,00</td>
-          <td>0.720 kg</td>
-          <td class="muted">—</td>
-        </tr>
+        <tr><td>25/06/2026 11:30</td><td class="tiny">Refeitório 1 · #001</td><td>R$ 2,50</td><td class="muted">—</td><td><span class="badge badge-green">✓</span></td></tr>
+        <tr><td>24/06/2026 12:15</td><td class="tiny">Refeitório 1 · #001</td><td>R$ 2,50</td><td class="muted">—</td><td class="muted">—</td></tr>
+        <tr><td>22/06/2026 11:45</td><td class="tiny">Refeitório 1 · #001</td><td>R$ 2,50</td><td class="muted">—</td><td class="muted">—</td></tr>
+        <tr><td>20/06/2026 12:30</td><td class="tiny">Refeitório 2 · #002</td><td>R$ 0,00</td><td class="muted">—</td><td><span class="badge badge-green">✓</span></td></tr>
+        <tr><td>18/06/2026 11:20</td><td class="tiny">Rest. Executivo · #006</td><td>R$ 15,00</td><td>0.720 kg</td><td class="muted">—</td></tr>
       </tbody>
     </table>
   </div>
@@ -618,7 +419,7 @@ hr.dash {
       </div>
       <div class="form-group">
         <label>Refeitório</label>
-        <div class="input">Salão Térreo Principal · RU Central Darcy</div>
+        <div class="input">Refeitório 1 · RU Central Darcy</div>
       </div>
       <div class="form-group">
         <label>Refeição</label>
@@ -644,13 +445,13 @@ hr.dash {
           <tr><th>Data</th><th>Catraca</th><th>Valor</th><th>Peso</th></tr>
         </thead>
         <tbody>
-          <tr><td>25/06 11:30</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
-          <tr><td>24/06 12:15</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
-          <tr><td>22/06 11:45</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
-          <tr><td>20/06 12:30</td><td class="tiny">Salão Superior #002</td><td>R$ 0,00</td><td class="muted">—</td></tr>
-          <tr><td>18/06 11:20</td><td class="tiny">Rest. Executivo #003</td><td>R$ 15,00</td><td>0.720 kg</td></tr>
-          <tr><td>15/06 12:00</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
-          <tr><td>12/06 11:40</td><td class="tiny">Salão Térreo #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+          <tr><td>25/06 11:30</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+          <tr><td>24/06 12:15</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+          <tr><td>22/06 11:45</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+          <tr><td>20/06 12:30</td><td class="tiny">Refeitório 2 #002</td><td>R$ 0,00</td><td class="muted">—</td></tr>
+          <tr><td>18/06 11:20</td><td class="tiny">Rest. Executivo #006</td><td>R$ 15,00</td><td>0.720 kg</td></tr>
+          <tr><td>15/06 12:00</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
+          <tr><td>12/06 11:40</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
         </tbody>
       </table>
       <div class="modal-actions">
@@ -689,11 +490,7 @@ hr.dash {
   </div>
 
   <hr class="dash">
-
-  <!-- Admin notice -->
   <div class="admin-toggle">acesso administrador → painel de controle</div>
-
-  <!-- Footer -->
   <div class="footer">
     <span>RU-Express · Banco de Dados 2026/1</span>
     <span>UnB · FGA · v1.0</span>
@@ -703,13 +500,11 @@ hr.dash {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Modals
   const modalDeposit = document.getElementById('modalDeposit');
   const modalFastPass = document.getElementById('modalFastPass');
   const modalAcessos = document.getElementById('modalAcessos');
   const modalBinary = document.getElementById('modalBinaryInfo');
 
-  // Openers
   document.getElementById('btnDeposit').addEventListener('click', () => modalDeposit.style.display = 'flex');
   document.getElementById('cardDeposit').addEventListener('click', () => modalDeposit.style.display = 'flex');
   document.getElementById('cardFastPass').addEventListener('click', () => modalFastPass.style.display = 'flex');
@@ -717,71 +512,38 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('seeAllAccesses').addEventListener('click', () => modalAcessos.style.display = 'flex');
   document.getElementById('showPhotoHint').addEventListener('click', () => modalBinary.style.display = 'flex');
 
-  // Closers
   document.getElementById('closeDeposit').addEventListener('click', () => modalDeposit.style.display = 'none');
   document.getElementById('closeFastPass').addEventListener('click', () => modalFastPass.style.display = 'none');
   document.getElementById('closeAcessos').addEventListener('click', () => modalAcessos.style.display = 'none');
   document.getElementById('closeBinaryInfo').addEventListener('click', () => modalBinary.style.display = 'none');
 
-  // Close on overlay click
   [modalDeposit, modalFastPass, modalAcessos, modalBinary].forEach(m => {
     m.addEventListener('click', (e) => { if (e.target === m) m.style.display = 'none'; });
   });
 
-  // Amount picker
   document.querySelectorAll('.amount-pill').forEach(pill => {
     pill.addEventListener('click', function() {
       document.querySelectorAll('.amount-pill').forEach(p => p.style.color = '');
       this.style.color = 'var(--color-bone)';
       this.style.borderColor = 'var(--color-bone)';
-      const val = this.textContent.trim();
-      document.querySelector('#modalDeposit .input').textContent = val;
+      document.querySelector('#modalDeposit .input').textContent = this.textContent.trim();
     });
   });
 
-  // ---- QR Code ----
   let qrInstance = null;
   function generateQR(text) {
     const container = document.getElementById('qrcode');
     container.innerHTML = '';
-    qrInstance = new QRCode(container, {
-      text: text,
-      width: 104,
-      height: 104,
-      colorDark: '#000000',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
-    });
+    qrInstance = new QRCode(container, { text, width: 104, height: 104, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
   }
-
-  // Encode user identity data into QR
   function getUserQRData() {
-    const payload = {
-      tipo: 'USUARIO_RU',
-      id: 1,
-      nome: 'Antonio Coelho',
-      matricula: '221000001',
-      email: 'antonio@aluno.unb.br',
-      categoria: 1,
-      prioridade: false
-    };
-    return JSON.stringify(payload);
+    return JSON.stringify({ tipo: 'USUARIO_RU', id: 1, nome: 'Antonio Coelho', matricula: '221000001', email: 'antonio@aluno.unb.br', categoria: 1, prioridade: false });
   }
-
   generateQR(getUserQRData());
-
-  document.getElementById('btnRegenerateQR').addEventListener('click', function() {
-    generateQR(getUserQRData());
-  });
-
-  document.getElementById('btnDownloadQR').addEventListener('click', function() {
+  document.getElementById('btnRegenerateQR').addEventListener('click', () => generateQR(getUserQRData()));
+  document.getElementById('btnDownloadQR').addEventListener('click', () => {
     const canvas = document.querySelector('#qrcode canvas');
-    if (canvas) {
-      const link = document.createElement('a');
-      link.download = 'carteirinha_221000001.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    }
+    if (canvas) { const link = document.createElement('a'); link.download = 'carteirinha_221000001.png'; link.href = canvas.toDataURL('image/png'); link.click(); }
   });
 });
 </script>
