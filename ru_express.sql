@@ -22,7 +22,8 @@ CREATE TABLE Grupo_Acesso (
 
 CREATE TABLE Sorteio_Diario (
     id_sorteio INT AUTO_INCREMENT,
-    data_sorteio DATE NOT NULL,
+    horario_inicio DATETIME NOT NULL,
+    horario_fim DATETIME NOT NULL,
     quantidade_vagas INT NOT NULL,
 
     PRIMARY KEY (id_sorteio)
@@ -167,7 +168,7 @@ END //
 DELIMITER ;
 
 -- =======================================================
--- PROCEDURE: Sorteio ponderado de FastPass
+-- PROCEDURE: Sorteio ponderado de FastPass por faixa
 -- =======================================================
 
 DELIMITER //
@@ -180,13 +181,10 @@ CREATE PROCEDURE Gerar_Sorteio_FastPass (
 )
 BEGIN   
     DECLARE v_id_sorteio INT;
-    DECLARE v_data DATE;
 
-    SET v_data = DATE(p_horario_inicio);
-
-    -- 1. Registrar o sorteio
-    INSERT INTO Sorteio_Diario (data_sorteio, quantidade_vagas)
-    VALUES (v_data, p_vagas);
+    -- 1. Registrar o sorteio com a faixa de horário e seu limite próprio
+    INSERT INTO Sorteio_Diario (horario_inicio, horario_fim, quantidade_vagas)
+    VALUES (p_horario_inicio, p_horario_fim, p_vagas);
 
     SET v_id_sorteio = LAST_INSERT_ID();
 
@@ -245,13 +243,13 @@ INSERT INTO Grupo_Acesso (nome_categoria, valor_refeicao, valor_desjejum) VALUES
 ('Visitante Sem Vínculo', 20.00, 10.00),
 ('Pós-Graduação', 2.50, 1.00);
 
--- 3. Inserindo Sorteios Diários
-INSERT INTO Sorteio_Diario (data_sorteio, quantidade_vagas) VALUES 
-('2026-06-25', 50),
-('2026-06-26', 60),
-('2026-06-27', 50),
-('2026-06-28', 100),
-('2026-06-29', 50);
+-- 3. Inserindo Sorteios por faixa de horário (cada faixa tem seu próprio limite)
+INSERT INTO Sorteio_Diario (horario_inicio, horario_fim, quantidade_vagas) VALUES 
+('2026-06-25 11:30:00', '2026-06-25 11:40:00', 20),
+('2026-06-25 12:00:00', '2026-06-25 12:10:00', 30),
+('2026-06-26 11:30:00', '2026-06-26 11:40:00', 25),
+('2026-06-26 12:00:00', '2026-06-26 12:10:00', 35),
+('2026-06-27 12:00:00', '2026-06-27 12:10:00', 50);
 
 -- 4. Inserindo Restaurantes Universitários
 INSERT INTO Restaurante_Universitario (nome_ru, id_campus) VALUES 
@@ -261,7 +259,7 @@ INSERT INTO Restaurante_Universitario (nome_ru, id_campus) VALUES
 ('RU Ceilândia', 3),
 ('RU Planaltina', 4);
 
--- 5. Inserindo Refeitórios (andar NULL para salões únicos)
+-- 5. Inserindo Refeitórios (andar NULL para salões únicos; id_ru = 1 para Darcy)
 INSERT INTO Refeitorio (nome_refeitorio, tipo_servico, andar, id_ru) VALUES 
 ('Refeitório 1', 'Padrão', 0, 1),
 ('Refeitório 2', 'Padrão', 1, 1),
@@ -351,13 +349,13 @@ INSERT INTO Acesso_RU (data_hora_entrada, valor_cobrado, peso_prato_kg, id_usuar
 ('2026-06-25 12:30:00', 20.00, NULL, 11, 5),
 ('2026-06-25 12:45:00', 2.50, NULL, 2, 1);
 
--- 14. Inserindo Bilhetes FastPass (com janela de horário)
+-- 14. Inserindo Bilhetes FastPass (vinculados a sorteios por faixa)
 INSERT INTO Bilhete_FastPass (horario_inicio, horario_fim, status_uso, id_sorteio, id_usuario, id_refeitorio) VALUES 
-('2026-06-25 12:00:00', '2026-06-25 12:10:00', 'Utilizado', 1, 1, 1),
-('2026-06-26 12:00:00', '2026-06-26 12:10:00', 'Pendente', 2, 3, 2),
-('2026-06-26 11:30:00', '2026-06-26 11:40:00', 'Pendente', 2, 2, 1),
-('2026-06-27 12:00:00', '2026-06-27 12:10:00', 'Expirado', 3, 5, 4),
-('2026-06-28 11:30:00', '2026-06-28 11:40:00', 'Pendente', 4, 4, 1);
+('2026-06-25 11:30:00', '2026-06-25 11:40:00', 'Utilizado', 1, 1, 1),
+('2026-06-25 12:00:00', '2026-06-25 12:10:00', 'Utilizado', 2, 3, 2),
+('2026-06-26 11:30:00', '2026-06-26 11:40:00', 'Pendente', 3, 2, 1),
+('2026-06-26 12:00:00', '2026-06-26 12:10:00', 'Pendente', 4, 3, 2),
+('2026-06-27 12:00:00', '2026-06-27 12:10:00', 'Expirado', 5, 5, 4);
 
 -- =======================================================
 -- DQL (DATA QUERY LANGUAGE) - VIEW DE RELATÓRIO
