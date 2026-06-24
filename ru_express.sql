@@ -232,14 +232,13 @@ INSERT INTO Campus (nome_campus) VALUES
 ('FAL - Fazenda Água Limpa');
 
 -- 2. Inserindo Grupos de Acesso
-INSERT INTO Grupo_Acesso (nome_categoria, valor_refeicao, valor_desjejum) VALUES 
-('Estudante Padrão', 2.50, 1.00),
-('Estudante Isento (100%)', 0.00, 0.00),
-('Servidor/Docente', 15.00, 7.00),
-('Visitante Sem Vínculo', 20.00, 10.00),
-('Pós-Graduação', 2.50, 1.00);
+INSERT INTO Grupo_Acesso (nome_categoria, valor_refeicao, valor_desjejum) VALUES
+('Grupo 1', 0.00, 0.00),
+('Grupo 2', 4.50, 2.00),
+('Grupo 3', 15.20, 7.05),
+('Grupo 4', 2.50, 1.50),
 
--- 3. Inserindo Sorteios Diários
+-- 3. Inserindo Sorteios Diários (MUDAR!!)
 INSERT INTO Sorteio_Diario (data_sorteio, quantidade_vagas) VALUES 
 ('2026-06-25', 50),
 ('2026-06-26', 60),
@@ -250,10 +249,10 @@ INSERT INTO Sorteio_Diario (data_sorteio, quantidade_vagas) VALUES
 -- 4. Inserindo Restaurantes Universitários
 INSERT INTO Restaurante_Universitario (nome_ru, id_campus) VALUES 
 ('RU Central Darcy', 1),
-('RU Setor Norte', 1),
-('RU Gama', 2),
-('RU Ceilândia', 3),
-('RU Planaltina', 4);
+('RU Setor Norte', 2),
+('RU Gama', 3),
+('RU Ceilândia', 4),
+('RU Planaltina', 5);
 
 -- 5. Inserindo Refeitórios (Note que o andar do Salão Único é NULL)
 INSERT INTO Refeitorio (nome_refeitorio, tipo_servico, andar, id_ru) VALUES 
