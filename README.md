@@ -15,3 +15,47 @@ Inteligência de Fluxo: Consolidação de dados para fornecer aos alunos estatí
 
 Aderência à Disciplina (Bancos de Dados)
 O escopo do projeto atende perfeitamente à especificação técnica exigida. A diversidade de informações garante a criação de mais de 10 entidades consistentes. A lógica complexa do sorteio probabilístico exigirá a criação de Procedures dedicadas, enquanto a cobrança em tempo real no momento da catraca será a oportunidade ideal para a implementação de Triggers, garantindo a integridade dos dados e o uso avançado do SGBD.
+
+---
+
+## Rodando o projeto
+
+### Front End
+
+Para servir as páginas do Front End rode o seguinte comando:
+
+```
+python -m http.server --directory frontend
+```
+
+### Back End
+
+Para rodar o servidor Back End, é necessário ter um servidor MySQL rodando e python instalado.
+As configurações (`DB_USER` e `DB_PASSWORD`) para conectar com o servidor MySQL devem estar em `backend/.env`.
+
+Com isso, os seguintes comandos devem ser rodados:
+
+```
+cd backend
+
+python -m venv .venv
+
+# Linux
+source .venv/bin/activate
+
+# Windows cmd
+.venv\Scripts\activate.bat
+
+# Windows powershell
+.venv\Scripts\Activate.ps1
+```
+
+```
+pip install fastapi uvicorn python-dotenv mysql-connector-python
+```
+
+```
+uvicorn main:app --reload
+```
+
+
