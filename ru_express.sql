@@ -4,14 +4,14 @@
 
 -- Tabelas independentes (PK)
 
-CREATE TABLE Campus (
+CREATE TABLE IF NOT EXISTS Campus (
     id_campus INT AUTO_INCREMENT,
     nome_campus VARCHAR(100) NOT NULL,
 
     PRIMARY KEY (id_campus)
 );
 
-CREATE TABLE Grupo_Acesso (
+CREATE TABLE IF NOT EXISTS Grupo_Acesso (
     id_categoria INT AUTO_INCREMENT,
     nome_categoria VARCHAR(100) NOT NULL,
     valor_refeicao FLOAT NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE Grupo_Acesso (
     PRIMARY KEY (id_categoria)
 );
 
-CREATE TABLE Sorteio_Diario (
+CREATE TABLE IF NOT EXISTS Sorteio_Diario (
     id_sorteio INT AUTO_INCREMENT,
     horario_inicio DATETIME NOT NULL,
     horario_fim DATETIME NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE Sorteio_Diario (
 
 -- Tabelas dependentes (PK e FK)
 
-CREATE TABLE Restaurante_Universitario (
+CREATE TABLE IF NOT EXISTS Restaurante_Universitario (
     id_ru INT AUTO_INCREMENT,
     nome_ru VARCHAR(100) NOT NULL,
     id_campus INT NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE Restaurante_Universitario (
     FOREIGN KEY (id_campus) REFERENCES Campus(id_campus)
 );
 
-CREATE TABLE Refeitorio (
+CREATE TABLE IF NOT EXISTS Refeitorio (
     id_refeitorio INT AUTO_INCREMENT,
     nome_refeitorio VARCHAR(100) NOT NULL,
     tipo_servico VARCHAR(100) NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE Refeitorio (
     FOREIGN KEY (id_ru) REFERENCES Restaurante_Universitario(id_ru)
 );
 
-CREATE TABLE Catraca (
+CREATE TABLE IF NOT EXISTS Catraca (
     id_catraca INT AUTO_INCREMENT,
     status_operacao VARCHAR(100) NOT NULL,
     id_refeitorio INT NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE Catraca (
     FOREIGN KEY (id_refeitorio) REFERENCES Refeitorio(id_refeitorio)
 );
 
-CREATE TABLE Usuario_RU (
+CREATE TABLE IF NOT EXISTS Usuario_RU (
     id_usuario INT AUTO_INCREMENT,
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE Usuario_RU (
     FOREIGN KEY (id_categoria) REFERENCES Grupo_Acesso(id_categoria)
 );
 
-CREATE TABLE Estudante (
+CREATE TABLE IF NOT EXISTS Estudante (
     matricula INT NOT NULL,
     dias_sem_fastpass INT NOT NULL,
     id_usuario INT NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE Estudante (
     FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
 );
 
-CREATE TABLE Documentacao_Assistencia (
+CREATE TABLE IF NOT EXISTS Documentacao_Assistencia (
     id_documento INT AUTO_INCREMENT,
     data_envio DATE NOT NULL,
     status_aprovacao VARCHAR(100) NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE Documentacao_Assistencia (
     FOREIGN KEY (id_usuario) REFERENCES Estudante(id_usuario)
 );
 
-CREATE TABLE Servidor_Docente (
+CREATE TABLE IF NOT EXISTS Servidor_Docente (
     siape INT NOT NULL,
     departamento VARCHAR(100) NOT NULL,
     id_usuario INT NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE Servidor_Docente (
     FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
 );
 
-CREATE TABLE Visitante (
+CREATE TABLE IF NOT EXISTS Visitante (
     motivo_visita VARCHAR(100),
     id_usuario INT NOT NULL,
 
@@ -111,7 +111,7 @@ CREATE TABLE Visitante (
     FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
 );
 
-CREATE TABLE Recarga_Saldo (
+CREATE TABLE IF NOT EXISTS Recarga_Saldo (
     id_recarga INT AUTO_INCREMENT,
     valor_adicionado FLOAT NOT NULL,
     data_hora_recarga DATETIME NOT NULL,
@@ -122,7 +122,7 @@ CREATE TABLE Recarga_Saldo (
     FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
 );
 
-CREATE TABLE Acesso_RU (
+CREATE TABLE IF NOT EXISTS Acesso_RU (
     id_acesso INT AUTO_INCREMENT,
     data_hora_entrada DATETIME NOT NULL,
     valor_cobrado FLOAT,
@@ -135,7 +135,7 @@ CREATE TABLE Acesso_RU (
     FOREIGN KEY (id_catraca) REFERENCES Catraca(id_catraca)
 );
 
-CREATE TABLE Bilhete_FastPass (
+CREATE TABLE IF NOT EXISTS Bilhete_FastPass (
     id_bilhete INT AUTO_INCREMENT,
     horario_inicio DATETIME NOT NULL,
     horario_fim DATETIME NOT NULL,
@@ -156,7 +156,7 @@ CREATE TABLE Bilhete_FastPass (
 
 DELIMITER //
 
-CREATE TRIGGER trg_atualizar_saldo_apos_recarga
+CREATE TRIGGER IF NOT EXISTS trg_atualizar_saldo_apos_recarga
 AFTER INSERT ON Recarga_Saldo
 FOR EACH ROW
 BEGIN
@@ -173,7 +173,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Gerar_Sorteio_FastPass (
+CREATE PROCEDURE IF NOT EXISTS Gerar_Sorteio_FastPass (
     IN p_horario_inicio DATETIME,
     IN p_horario_fim DATETIME,
     IN p_vagas INT,
@@ -224,144 +224,11 @@ END //
 DELIMITER ;
 
 -- =======================================================
--- DML (DATA MANIPULATION LANGUAGE) - POVOAMENTO
--- =======================================================
-
--- 1. Inserindo Campi
-INSERT INTO Campus (nome_campus) VALUES 
-('Darcy Ribeiro'),
-('FGA - Gama'),
-('FCE - Ceilândia'),
-('FUP - Planaltina'),
-('FAL - Fazenda Água Limpa');
-
--- 2. Inserindo Grupos de Acesso
-INSERT INTO Grupo_Acesso (nome_categoria, valor_refeicao, valor_desjejum) VALUES
-('Grupo 1', 0.00, 0.00),
-('Grupo 2', 4.50, 2.00),
-('Grupo 3', 15.20, 7.05),
-('Grupo 4', 2.50, 1.50),
-
--- 3. Inserindo Sorteios Diários (MUDAR!!)
-INSERT INTO Sorteio_Diario (data_sorteio, quantidade_vagas) VALUES 
-('2026-06-25', 50),
-('2026-06-26', 60),
-('2026-06-27', 50),
-('2026-06-28', 100),
-('2026-06-29', 50);
-
--- 4. Inserindo Restaurantes Universitários
-INSERT INTO Restaurante_Universitario (nome_ru, id_campus) VALUES 
-('RU Central Darcy', 1),
-('RU Setor Norte', 2),
-('RU Gama', 3),
-('RU Ceilândia', 4),
-('RU Planaltina', 5);
-
--- 5. Inserindo Refeitórios (andar NULL para salões únicos; id_ru = 1 para Darcy)
-INSERT INTO Refeitorio (nome_refeitorio, tipo_servico, andar, id_ru) VALUES 
-('Refeitório 1', 'Padrão', 0, 1),
-('Refeitório 2', 'Padrão', 1, 1),
-('Refeitório 3', 'Padrão', 2, 1),
-('Refeitório 4', 'Padrão', 3, 1),
-('Refeitório 5', 'Padrão', 4, 1),
-('Refeitório 6', 'Padrão', 5, 1),
-('Restaurante Executivo', 'Executivo', 7, 1),
-('Salão Único FGA', 'Padrão', NULL, 3),
-('Salão Único FCE', 'Padrão', NULL, 4);
-
--- 6. Inserindo Catracas
-INSERT INTO Catraca (status_operacao, id_refeitorio) VALUES 
-('Ativa', 1),
-('Ativa', 2),
-('Ativa', 3),
-('Em Manutenção', 4),
-('Ativa', 5);
-
--- 7. Inserindo Usuários RU (15 registros: 5 de cada tipo)
--- 0x89504E47 = PNG dummy para foto_perfil
-INSERT INTO Usuario_RU (nome, email, saldo_atual, prioridade_legal, foto_perfil, id_categoria) VALUES 
--- IDs 1-5: Estudantes
-('Antonio Coelho', 'antonio@aluno.unb.br', 50.00, FALSE, 0x89504E47, 1),
-('Yasmin', 'yasmin@aluno.unb.br', 12.50, FALSE, 0x89504E47, 1),
-('Vitor', 'vitor@aluno.unb.br', 0.00, TRUE, 0x89504E47, 2),
-('Rafael', 'rafael@aluno.unb.br', 25.00, FALSE, 0x89504E47, 1),
-('Felipe', 'felipe@aluno.unb.br', 5.00, FALSE, 0x89504E47, 1),
--- IDs 6-10: Servidores
-('Prof. Silva', 'silva@unb.br', 150.00, FALSE, 0x89504E47, 3),
-('Prof. Costa', 'costa@unb.br', 45.00, FALSE, 0x89504E47, 3),
-('Tec. Santos', 'santos@unb.br', 90.00, FALSE, 0x89504E47, 3),
-('Prof. Oliveira', 'oliveira@unb.br', 30.00, FALSE, 0x89504E47, 3),
-('Tec. Souza', 'souza@unb.br', 15.00, FALSE, 0x89504E47, 3),
--- IDs 11-15: Visitantes
-('Carlos Mendes', 'carlos@email.com', 40.00, FALSE, NULL, 4),
-('Marcos Rocha', 'marcos@email.com', 20.00, FALSE, NULL, 4),
-('Julia Lima', 'julia@email.com', 0.00, FALSE, NULL, 4),
-('Fernanda Alves', 'fernanda@email.com', 60.00, FALSE, NULL, 4),
-('Roberto Nunes', 'roberto@email.com', 20.00, TRUE, NULL, 4);
-
--- 8. Inserindo Estudantes (FK para IDs 1-5)
-INSERT INTO Estudante (matricula, dias_sem_fastpass, id_usuario) VALUES 
-(221000001, 5, 1),
-(231000002, 2, 2),
-(211000003, 10, 3),
-(241000004, 0, 4),
-(221000005, 3, 5);
-
--- 9. Inserindo Servidores (FK para IDs 6-10)
-INSERT INTO Servidor_Docente (siape, departamento, id_usuario) VALUES 
-(1122334, 'Ciência da Computação', 6),
-(2233445, 'Matemática', 7),
-(3344556, 'Engenharia', 8),
-(4455667, 'Física', 9),
-(5566778, 'Medicina', 10);
-
--- 10. Inserindo Visitantes (FK para IDs 11-15)
-INSERT INTO Visitante (motivo_visita, id_usuario) VALUES 
-('Palestra Sinapses Abertas', 11),
-('Competição II Maratona do Cerrado', 12),
-('Reunião Administrativa', 13),
-('Visita Guiada', 14),
-('Manutenção Técnica', 15);
-
--- 11. Inserindo Documentação (0x25504446 = "%PDF" dummy)
-INSERT INTO Documentacao_Assistencia (data_envio, status_aprovacao, comprovante_pdf, id_usuario) VALUES 
-('2026-01-10', 'Aprovado', 0x25504446, 3),
-('2026-03-15', 'Em Análise', 0x25504446, 2),
-('2026-02-20', 'Aprovado', 0x25504446, 1),
-('2026-04-05', 'Rejeitado', 0x25504446, 4),
-('2026-05-12', 'Em Análise', 0x25504446, 5);
-
--- 12. Inserindo Recargas de Saldo
-INSERT INTO Recarga_Saldo (valor_adicionado, data_hora_recarga, metodo_pagamento, id_usuario) VALUES 
-(50.00, '2026-06-20 10:00:00', 'PIX', 1),
-(15.00, '2026-06-21 14:30:00', 'Cartão de Crédito', 6),
-(20.00, '2026-06-22 09:15:00', 'PIX', 11),
-(12.50, '2026-06-23 11:45:00', 'Boleto', 2),
-(30.00, '2026-06-24 16:20:00', 'PIX', 8);
-
--- 13. Inserindo Acessos no RU
-INSERT INTO Acesso_RU (data_hora_entrada, valor_cobrado, peso_prato_kg, id_usuario, id_catraca) VALUES 
-('2026-06-25 11:30:00', 2.50, NULL, 1, 1),
-('2026-06-25 12:00:00', 0.00, NULL, 3, 2),
-('2026-06-25 12:15:00', 15.00, 0.850, 6, 3),
-('2026-06-25 12:30:00', 20.00, NULL, 11, 5),
-('2026-06-25 12:45:00', 2.50, NULL, 2, 1);
-
--- 14. Inserindo Bilhetes FastPass (vinculados a sorteios por faixa)
-INSERT INTO Bilhete_FastPass (horario_inicio, horario_fim, status_uso, id_sorteio, id_usuario, id_refeitorio) VALUES 
-('2026-06-25 11:30:00', '2026-06-25 11:40:00', 'Utilizado', 1, 1, 1),
-('2026-06-25 12:00:00', '2026-06-25 12:10:00', 'Utilizado', 2, 3, 2),
-('2026-06-26 11:30:00', '2026-06-26 11:40:00', 'Pendente', 3, 2, 1),
-('2026-06-26 12:00:00', '2026-06-26 12:10:00', 'Pendente', 4, 3, 2),
-('2026-06-27 12:00:00', '2026-06-27 12:10:00', 'Expirado', 5, 5, 4);
-
--- =======================================================
 -- DQL (DATA QUERY LANGUAGE) - VIEW DE RELATÓRIO
 -- =======================================================
 
 -- View: fluxo de pessoas e faturamento por refeitório
-CREATE VIEW vw_relatorio_fluxo_ru AS
+CREATE VIEW IF NOT EXISTS vw_relatorio_fluxo_ru AS
 SELECT 
     r.nome_refeitorio, 
     r.tipo_servico, 
