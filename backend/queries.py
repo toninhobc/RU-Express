@@ -49,7 +49,22 @@ QueryAcesso = """
         INNER JOIN Restaurante_Universitario ru ON r.id_ru = ru.id_ru
         WHERE a.id_usuario = %s
         ORDER BY a.data_hora_entrada DESC
-        
+
         LIMIT %s OFFSET %s;
         """
 
+QueryBilheteBase = """
+    SELECT 
+        b.id_bilhete,
+        b.horario_inicio,
+        b.horario_fim,
+        b.status_uso,
+        r.nome_refeitorio,
+        ru.nome_ru AS restaurante,
+        s.id_sorteio
+    FROM Bilhete_FastPass b
+    INNER JOIN Refeitorio r ON b.id_refeitorio = r.id_refeitorio
+    INNER JOIN Restaurante_Universitario ru ON r.id_ru = ru.id_ru
+    INNER JOIN Sorteio_Diario s ON b.id_sorteio = s.id_sorteio
+    WHERE b.id_usuario = %s
+"""
