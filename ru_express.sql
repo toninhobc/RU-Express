@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS Campus (
 CREATE TABLE IF NOT EXISTS Grupo_Acesso (
     id_categoria INT AUTO_INCREMENT,
     nome_categoria VARCHAR(100) NOT NULL,
-    valor_refeicao FLOAT NOT NULL,
-    valor_desjejum FLOAT NOT NULL,
+    valor_refeicao Decimal(5, 2) NOT NULL,
+    valor_desjejum Decimal(5, 2) NOT NULL,
 
     PRIMARY KEY (id_categoria)
 );
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS Restaurante_Universitario (
     id_campus INT NOT NULL,
 
     PRIMARY KEY (id_ru),
-    FOREIGN KEY (id_campus) REFERENCES Campus(id_campus)
+    FOREIGN KEY (id_campus) REFERENCES Campus(id_campus) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Refeitorio (
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS Refeitorio (
     id_ru INT NOT NULL,
 
     PRIMARY KEY (id_refeitorio),
-    FOREIGN KEY (id_ru) REFERENCES Restaurante_Universitario(id_ru)
+    FOREIGN KEY (id_ru) REFERENCES Restaurante_Universitario(id_ru) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Catraca (
@@ -58,14 +58,14 @@ CREATE TABLE IF NOT EXISTS Catraca (
     id_refeitorio INT NOT NULL,
 
     PRIMARY KEY (id_catraca),
-    FOREIGN KEY (id_refeitorio) REFERENCES Refeitorio(id_refeitorio)
+    FOREIGN KEY (id_refeitorio) REFERENCES Refeitorio(id_refeitorio) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Usuario_RU (
     id_usuario INT AUTO_INCREMENT,
     nome VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    saldo_atual FLOAT NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    saldo_atual Decimal(5, 2) NOT NULL,
     prioridade_legal BOOLEAN NOT NULL,
     foto_perfil BLOB,
     id_categoria INT NOT NULL,
@@ -75,12 +75,12 @@ CREATE TABLE IF NOT EXISTS Usuario_RU (
 );
 
 CREATE TABLE IF NOT EXISTS Estudante (
-    matricula INT NOT NULL,
+    matricula INT NOT NULL UNIQUE,
     dias_sem_fastpass INT NOT NULL,
     id_usuario INT NOT NULL,
 
     PRIMARY KEY (id_usuario),
-    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Documentacao_Assistencia (
@@ -91,16 +91,16 @@ CREATE TABLE IF NOT EXISTS Documentacao_Assistencia (
     id_usuario INT NOT NULL,
 
     PRIMARY KEY (id_documento),
-    FOREIGN KEY (id_usuario) REFERENCES Estudante(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Estudante(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Servidor_Docente (
-    siape INT NOT NULL,
+    siape INT NOT NULL UNIQUE,
     departamento VARCHAR(100) NOT NULL,
     id_usuario INT NOT NULL,
 
     PRIMARY KEY (id_usuario),
-    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Visitante (
@@ -108,12 +108,12 @@ CREATE TABLE IF NOT EXISTS Visitante (
     id_usuario INT NOT NULL,
 
     PRIMARY KEY (id_usuario),
-    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Recarga_Saldo (
     id_recarga INT AUTO_INCREMENT,
-    valor_adicionado FLOAT NOT NULL,
+    valor_adicionado Decimal(5, 2) NOT NULL,
     data_hora_recarga DATETIME NOT NULL,
     metodo_pagamento VARCHAR(100) NOT NULL,
     id_usuario INT NOT NULL,
@@ -125,8 +125,8 @@ CREATE TABLE IF NOT EXISTS Recarga_Saldo (
 CREATE TABLE IF NOT EXISTS Acesso_RU (
     id_acesso INT AUTO_INCREMENT,
     data_hora_entrada DATETIME NOT NULL,
-    valor_cobrado FLOAT,
-    peso_prato_kg FLOAT,
+    valor_cobrado Decimal(5, 2),
+    peso_prato_kg Decimal(5, 2),
     id_usuario INT NOT NULL,
     id_catraca INT NOT NULL,
 
@@ -228,7 +228,7 @@ DELIMITER ;
 -- =======================================================
 
 -- View: fluxo de pessoas e faturamento por refeitório
-CREATE VIEW IF NOT EXISTS vw_relatorio_fluxo_ru AS
+CREATE OR REPLACE VIEW vw_relatorio_fluxo_ru AS
 SELECT 
     r.nome_refeitorio, 
     r.tipo_servico, 
