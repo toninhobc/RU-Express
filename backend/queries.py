@@ -53,6 +53,18 @@ QueryAcessos = """
         LIMIT %s OFFSET %s;
         """
 
+QueryAdminUsuariosBase = """
+    SELECT
+        id_usuario,
+        nome,
+        email,
+        saldo_atual,
+        prioridade_legal,
+        id_categoria
+    FROM Usuario_RU
+    WHERE 1=1
+"""
+
 QueryBilheteBase = """
     SELECT 
         b.id_bilhete,
@@ -74,14 +86,18 @@ QueryRelatorioFluxo = """
     FROM vw_relatorio_fluxo_ru;
 """
 
-QueryAdminUsuariosBase = """
-    SELECT
-        id_usuario,
-        nome,
-        email,
-        saldo_atual,
-        prioridade_legal,
-        id_categoria
-    FROM Usuario_RU
-    WHERE 1=1
+QueryRefeitorios = """
+    SELECT r.id_refeitorio, r.nome_refeitorio, r.tipo_servico, ru.nome_ru
+    FROM Refeitorio r
+    JOIN Restaurante_Universitario ru ON r.id_ru = ru.id_ru
+    ORDER BY ru.nome_ru, r.nome_refeitorio
+"""
+
+QueryRechargeInsert = """
+    INSERT INTO Recarga_Saldo (valor_adicionado, data_hora_recarga, metodo_pagamento, id_usuario)
+    VALUES (%s, %s, %s, %s)
+"""
+
+QuerySaldoAfterRecharge = """
+    SELECT saldo_atual FROM Usuario_RU WHERE id_usuario = %s
 """

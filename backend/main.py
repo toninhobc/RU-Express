@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Depends, Query, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from db import init_db, get_db
 
-from queries import QueryUser, QueryBalance, QueryAcessos, QueryBilheteBase, QueryRelatorioFluxo, QueryAdminUsuariosBase
+from queries import QueryUser, QueryBalance, QueryAcessos, QueryBilheteBase, QueryRefeitorios, QueryRechargeInsert, QuerySaldoAfterRecharge, QueryRelatorioFluxo, QueryAdminUsuariosBase
 
 VAGASFASTPASS = 20
 
@@ -12,6 +13,13 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root():
@@ -55,6 +63,40 @@ def balance(usuario_id: int = Query(), db=Depends(get_db)):
 
     return {"saldo": saldo}
 
+# ─── Refeitórios (para dropdowns no frontend) ──────────────────────────────
+
+@app.get("/api/refeitorios")
+def listar_refeitorios(db=Depends(get_db)):
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(QueryRefeitorios)
+    rows = cursor.fetchall()
+    cursor.close()
+    return {"refeitorios": rows}
+
+
+from pydantic import BaseModel
+
+class RechargeRequest(BaseModel):
+    usuario_id: int
+    valor: float
+    metodo_pagamento: str
+
+@app.post("/api/balance/recharge", status_code=status.HTTP_201_CREATED)
+def recharge_balance(body: RechargeRequest, db=Depends(get_db)):
+    cursor = db.cursor(dictionary=True)
+    from datetime import datetime
+    agora = datetime.now()
+    cursor.execute(QueryRechargeInsert, (body.valor, agora, body.metodo_pagamento, body.usuario_id))
+    db.commit()
+
+    cursor.execute(QuerySaldoAfterRecharge, (body.usuario_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    return {"saldo_atual": float(row["saldo_atual"])}
+
+
 # ─── Acessos ────────────────────────────────────────────────────────────────
 
 @app.get("/api/accesses")
@@ -79,10 +121,10 @@ def relatorio_fluxo(db=Depends(get_db)):
 @app.get("/api/admin/usuarios")
 def admin_usuarios(categoria: str = Query(None), busca: str = Query(None), db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-
-    # Para evitar erro com o BLOB, buscamos colunas explicitamente.
-    sql = QueryAdminUsuariosBase
-    params = []
+    # TODO: escreva seu SELECT com filtros opcionais por categoria e busca
+    
+    sql = "SELECT * FROM Usuario_RU WHERE 1=1"
+    params: list = []
 
     if categoria:
         sql += " AND id_categoria = %s"
@@ -94,8 +136,6 @@ def admin_usuarios(categoria: str = Query(None), busca: str = Query(None), db=De
         params.extend([like, like])
 
     sql += " ORDER BY nome"
-
-    cursor.execute(sql, params or None)
     cursor.execute(sql, tuple(params) if params else None)
     rows = cursor.fetchall()
     cursor.close()
@@ -110,7 +150,7 @@ def meus_bilhetes(usuario_id: int = Query(), status: str = Query(None), db=Depen
     
     # Inicia com a string importada
     sql = QueryBilheteBase
-    params = [usuario_id]
+    params: list = [usuario_id]
 
     if status:
         sql += " AND b.status_uso = %s"
