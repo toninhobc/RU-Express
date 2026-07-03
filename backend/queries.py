@@ -1,5 +1,4 @@
-QueryUser =
-        """"
+QueryUser = """
         SELECT 
             u.id_usuario, 
             u.nome, 
@@ -21,3 +20,14 @@ QueryUser =
         LEFT JOIN Visitante v ON u.id_usuario = v.id_usuario
         WHERE u.id_usuario = %s;
         """
+QueryBalance = """
+    SELECT
+        u.id_usuario,
+        u.nome,
+        u.saldo_atual,
+        g.nome_categoria AS categoria
+    FROM Usuario_RU u
+    INNER JOIN Grupo_Acesso g
+        ON u.id_categoria = g.id_categoria
+    WHERE u.id_usuario = %s;
+"""

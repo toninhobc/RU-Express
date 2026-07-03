@@ -39,7 +39,7 @@ def profile(usuario_id: int = Query(), db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
     from queries import QueryUser
     # Query 1
-    cursor.excute(QueryUser)
+    cursor.execute(QueryUser)
     cursor.execute("SELECT * FROM Usuario_RU WHERE id_usuario = %s", (usuario_id,))
     usuario = cursor.fetchone()
     cursor.close()
@@ -55,17 +55,16 @@ def profile(usuario_id: int = Query(), db=Depends(get_db)):
 @app.get("/api/balance")
 def balance(usuario_id: int = Query(), db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-    # TODO: escreva seu SELECT para retornar o saldo_atual
-    cursor.execute("SELECT saldo_atual FROM Usuario_RU WHERE id_usuario = %s", (usuario_id,))
-    row = cursor.fetchone()
+    from queries import QueryBalance
+    #Query 2
+    cursor.execute(QueryBalance, (usuario_id,))
+    saldo = cursor.fetchone()
     cursor.close()
 
-    if not row:
-        return {"error": "Usuário não encontrado"}, 404
+    if not saldo:
+        return {"error": "Usuário não encontrado"}
 
-    return {"saldo_atual": row["saldo_atual"]}
-
-
+    return {"saldo": saldo}
 # ─── Acessos ────────────────────────────────────────────────────────────────
 
 @app.get("/api/accesses")
