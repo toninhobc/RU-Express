@@ -38,7 +38,7 @@ Com isso, os seguintes comandos devem ser rodados:
 ```
 cd backend
 
-python -m venv .venv
+python -m venv .venv  (Se não funcionar, teste: python3 -m venv .venv)
 
 # Linux
 source .venv/bin/activate

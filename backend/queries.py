@@ -73,3 +73,15 @@ QueryRelatorioFluxo = """
         *
     FROM vw_relatorio_fluxo_ru;
 """
+
+QueryAdminUsuariosBase = """
+    SELECT
+        id_usuario,
+        nome,
+        email,
+        saldo_atual,
+        prioridade_legal,
+        id_categoria
+    FROM Usuario_RU
+    WHERE 1=1
+"""

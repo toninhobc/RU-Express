@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Query, HTTPException, status
 from contextlib import asynccontextmanager
 from db import init_db, get_db
 
-from queries import QueryUser, QueryBalance, QueryAcessos, QueryBilheteBase
+from queries import QueryUser, QueryBalance, QueryAcessos, QueryBilheteBase, QueryRelatorioFluxo, QueryAdminUsuariosBase
 
 VAGASFASTPASS = 20
 
@@ -70,8 +70,6 @@ def accesses(usuario_id: int = Query(), limit: int = Query(20), offset: int = Qu
 @app.get("/api/admin/relatorio-fluxo")
 def relatorio_fluxo(db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-    from queries import QueryRelatorioFluxo
-    #Query 4
     cursor.execute(QueryRelatorioFluxo)
     rows = cursor.fetchall()
     cursor.close()
@@ -81,9 +79,9 @@ def relatorio_fluxo(db=Depends(get_db)):
 @app.get("/api/admin/usuarios")
 def admin_usuarios(categoria: str = Query(None), busca: str = Query(None), db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-    # TODO: escreva seu SELECT com filtros opcionais por categoria e busca
-    
-    sql = "SELECT * FROM Usuario_RU WHERE 1=1"
+
+    # Para evitar erro com o BLOB, buscamos colunas explicitamente.
+    sql = QueryAdminUsuariosBase
     params = []
 
     if categoria:
@@ -96,6 +94,7 @@ def admin_usuarios(categoria: str = Query(None), busca: str = Query(None), db=De
         params.extend([like, like])
 
     sql += " ORDER BY nome"
+
     cursor.execute(sql, params or None)
     cursor.execute(sql, tuple(params) if params else None)
     rows = cursor.fetchall()
