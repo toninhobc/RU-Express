@@ -70,8 +70,9 @@ def accesses(usuario_id: int = Query(), limit: int = Query(20), offset: int = Qu
 @app.get("/api/admin/relatorio-fluxo")
 def relatorio_fluxo(db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-    # TODO: escreva seu SELECT usando a view vw_relatorio_fluxo_ru
-    cursor.execute("SELECT * FROM vw_relatorio_fluxo_ru")
+    from queries import QueryRelatorioFluxo
+    #Query 4
+    cursor.execute(QueryRelatorioFluxo)
     rows = cursor.fetchall()
     cursor.close()
     return {"relatorio": rows}

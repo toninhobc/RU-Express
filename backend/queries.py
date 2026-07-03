@@ -68,3 +68,8 @@ QueryBilheteBase = """
     INNER JOIN Sorteio_Diario s ON b.id_sorteio = s.id_sorteio
     WHERE b.id_usuario = %s
 """
+QueryRelatorioFluxo = """
+    SELECT
+        *
+    FROM vw_relatorio_fluxo_ru;
+"""
