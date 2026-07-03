@@ -37,7 +37,9 @@ def db(db=Depends(get_db)):
 @app.get("/api/profile")
 def profile(usuario_id: int = Query(), db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-    # TODO: escreva aqui seu SELECT com JOINs (Grupo_Acesso, Estudante, etc.)
+    from queries import QueryUser
+    # Query 1
+    cursor.excute(QueryUser)
     cursor.execute("SELECT * FROM Usuario_RU WHERE id_usuario = %s", (usuario_id,))
     usuario = cursor.fetchone()
     cursor.close()
