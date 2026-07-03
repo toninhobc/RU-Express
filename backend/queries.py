@@ -33,7 +33,7 @@ QueryBalance = """
         WHERE u.id_usuario = %s;
         """
 
-QueryAcesso = """
+QueryAcessos = """
         SELECT 
             a.id_acesso,
             a.data_hora_entrada,

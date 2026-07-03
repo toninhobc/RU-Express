@@ -1,6 +1,8 @@
+from fastapi import FastAPI, Depends, Query, HTTPException, status
 from contextlib import asynccontextmanager
 from db import init_db, get_db
 
+from queries import QueryUser, QueryBalance, QueryAcessos, QueryBilheteBase
 
 VAGASFASTPASS = 20
 
@@ -58,7 +60,7 @@ def balance(usuario_id: int = Query(), db=Depends(get_db)):
 @app.get("/api/accesses")
 def accesses(usuario_id: int = Query(), limit: int = Query(20), offset: int = Query(0), db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-    cursor.execute(QueryAcesso, (usuario_id, limit, offset))
+    cursor.execute(QueryAcessos, (usuario_id, limit, offset))
     rows = cursor.fetchall()
     cursor.close()
     return {"accesses": rows}
