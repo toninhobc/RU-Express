@@ -7,7 +7,6 @@ load_dotenv()
 
 DB_NAME = "Ru_Express"
 
-# Path to the SQL script (one level up from backend/)
 SQL_SCRIPT = os.path.join(os.path.dirname(__file__), "..", "ru_express.sql")
 
 
