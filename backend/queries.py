@@ -34,9 +34,10 @@ QueryBalance = """
         """
 
 QueryAcessos = """
-        SELECT 
+        SELECT
             a.id_acesso,
             a.data_hora_entrada,
+            a.tipo_refeicao,
             a.valor_cobrado,
             a.peso_prato_kg,
             c.id_catraca,
@@ -100,4 +101,17 @@ QueryRechargeInsert = """
 
 QuerySaldoAfterRecharge = """
     SELECT saldo_atual FROM Usuario_RU WHERE id_usuario = %s
+"""
+
+QueryUsuarioInsert = """
+    INSERT INTO Usuario_RU (nome, email, saldo_atual, prioridade_legal, foto_perfil, id_categoria)
+    VALUES (%s, %s, 0, %s, NULL, %s)
+"""
+
+QueryUsuarioExists = """
+    SELECT 1 FROM Usuario_RU WHERE id_usuario = %s
+"""
+
+QueryUsuarioDelete = """
+    DELETE FROM Usuario_RU WHERE id_usuario = %s
 """
