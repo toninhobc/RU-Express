@@ -1,14 +1,13 @@
 import os
-import re
 import mysql.connector
 from dotenv import load_dotenv
+from seed import run_seed
 
 load_dotenv()
 
 DB_NAME = "Ru_Express"
 
 SQL_SCHEMA_SCRIPT = os.path.join(os.path.dirname(__file__), "..", "ru_express.sql")
-SQL_SEED_SCRIPT = os.path.join(os.path.dirname(__file__), "..", "seed.sql")
 
 
 def make_connection():
@@ -17,6 +16,7 @@ def make_connection():
         user=os.getenv("DB_USER", "root"),
         password=os.getenv("DB_PASSWORD", ""),
     )
+
 
 def init_db():
     conn = make_connection()
@@ -31,16 +31,14 @@ def init_db():
         while cursor.nextset():
             pass
 
-        cursor.execute("SELECT COUNT(*) FROM Campus")
-        if cursor.fetchone()[0] == 0:
-            with open(SQL_SEED_SCRIPT, encoding="utf-8") as f:
-                cursor.execute(f.read())
+        cursor.execute("SELECT COUNT(*) FROM Usuario_RU")
+        vazio = cursor.fetchone()[0] == 0
+        cursor.close()
 
-            while cursor.nextset():
-                pass
+        if vazio:
+            run_seed(conn)
 
         conn.commit()
-        cursor.close()
     finally:
         conn.close()
 
