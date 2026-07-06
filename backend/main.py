@@ -1,14 +1,16 @@
 from datetime import datetime
+import os
 
 import mysql.connector
 from fastapi import FastAPI, Depends, Query, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
 
-from db import init_db, get_db
-
-from queries import (
+from .db import init_db, get_db
+from .queries import (
     QueryUser,
     QueryBalance,
     QueryAcessos,
@@ -40,6 +42,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ─── Serve Frontend ─────────────────────────────────────────────────────────
+
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+
+@app.get("/", response_class=HTMLResponse)
+def serve_frontend():
+    with open(os.path.join(frontend_path, "mock_preview.html"), encoding="utf-8") as f:
+        return f.read()
 
 
 # ─── Usuários (CRUD) ─────────────────────────────────────────────────────────

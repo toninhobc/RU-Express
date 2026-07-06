@@ -259,6 +259,7 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
       <div class="meta">
         <span>aguarde <strong>...</strong></span>
       </div>
+      <span class="photo-hint" id="showPhotoHint">ver dados binários →</span>
     </div>
   </div>
 
@@ -476,8 +477,9 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'http://localhost:8000/api';
-const USUARIO_ID = 1;
+// ─── Config ──────────────────────────────────────────────────────────────
+const API = '/api';
+const USUARIO_ID = new URLSearchParams(window.location.search).get('usuario_id') || 1;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -549,29 +551,33 @@ async function loadBalance() {
   }
 }
 
-async function loadAccesses(limit = 5) {
+async function loadAccesses(limit = 5, tbodyId = 'acessosBody') {
   try {
     const res = await fetch(`${API}/accesses?usuario_id=${USUARIO_ID}&limit=${limit}`);
     if (!res.ok) throw new Error('Erro ao carregar acessos');
     const { accesses } = await res.json();
 
-    const render = (tbody) => {
-      if (accesses.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="muted">Nenhum acesso encontrado</td></tr>';
-        return;
+    const tbody = document.getElementById(tbodyId);
+    const isModal = tbodyId === 'acessosModalBody';
+
+    if (accesses.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${isModal ? 4 : 5}" class="muted">Nenhum acesso encontrado</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = accesses.map(a => {
+      const data = formatDate(a.data_hora_entrada);
+      const valor = a.valor_cobrado != null ? `R$ ${a.valor_cobrado.toFixed(2)}` : '<span class="muted">—</span>';
+      const peso = a.peso_prato_kg != null ? `${a.peso_prato_kg.toFixed(3)} kg` : '<span class="muted">—</span>';
+      const catraca = `${a.nome_refeitorio} · #${String(a.id_catraca).padStart(3, '0')}`;
+      if (isModal) {
+        return `<tr><td>${data}</td><td class="tiny">${catraca}</td><td>${valor}</td><td>${peso}</td></tr>`;
       }
-      tbody.innerHTML = accesses.map(a => {
-        const data = formatDate(a.data_hora_entrada);
-        const valor = a.valor_cobrado != null ? `R$ ${a.valor_cobrado.toFixed(2)}` : '<span class="muted">—</span>';
-        const peso = a.peso_prato_kg != null ? `${a.peso_prato_kg.toFixed(3)} kg` : '<span class="muted">—</span>';
-        const catraca = `${a.nome_refeitorio} · #${String(a.id_catraca).padStart(3, '0')}`;
-        return `<tr><td>${data}</td><td class="tiny">${catraca}</td><td>${valor}</td><td>${peso}</td><td class="muted">—</td></tr>`;
-      }).join('');
-    };
+      return `<tr><td>${data}</td><td class="tiny">${catraca}</td><td>${valor}</td><td>${peso}</td><td class="muted">—</td></tr>`;
+    }).join('');
 
-    render(document.getElementById('acessosBody'));
-
-    if (accesses.length > 0) {
+    // Only update lastAccess for the main page (not modal)
+    if (!isModal && accesses.length > 0) {
       document.getElementById('lastAccess').textContent = formatDate(accesses[0].data_hora_entrada);
     }
   } catch (err) {
@@ -672,7 +678,7 @@ function setupDeposit() {
     document.getElementById('pixArea').style.display = this.value === 'PIX' ? 'block' : 'none';
   });
 
-  document.getElementById('confirmDeposit').addEventListener('click', async function() {
+document.getElementById('confirmDeposit').addEventListener('click', async function() {
     const valor = getSelectedValor();
     if (valor <= 0) { showToast('Selecione um valor', false); return; }
     const metodo = document.getElementById('metodoPagamento').value;
@@ -687,7 +693,7 @@ function setupDeposit() {
       const [reais, centavos] = data.saldo_atual.toFixed(2).split('.');
       document.querySelector('.balance-left .value').innerHTML = `R$ ${reais}<small>,${centavos}</small>`;
       showToast(`Recarga de R$ ${valor.toFixed(2)} confirmada!`);
-      document.getElementById('modalDeposit').style.display = 'none';
+      document.getElementById('modalDeposit').classList.remove('show');
     } catch (err) {
       showToast('Erro ao recarregar: ' + err.message, false);
     }
@@ -724,7 +730,7 @@ function setupFastPass() {
         return;
       }
       showToast('Sorteio realizado! Verifique seus bilhetes.');
-      document.getElementById('modalFastPass').style.display = 'none';
+      document.getElementById('modalFastPass').classList.remove('show');
       loadBilhetes();
     } catch (err) {
       showToast('Erro de conexão', false);
@@ -738,23 +744,26 @@ function setupModais() {
   const modalAcessos = document.getElementById('modalAcessos');
   const modalBinary = document.getElementById('modalBinaryInfo');
 
+  const openModal = (modal) => modal.classList.add('show');
+  const closeModal = (modal) => modal.classList.remove('show');
+
   // Open
-  document.getElementById('btnDeposit').addEventListener('click', () => modalDeposit.style.display = 'flex');
-  document.getElementById('cardDeposit').addEventListener('click', () => modalDeposit.style.display = 'flex');
-  document.getElementById('cardFastPass').addEventListener('click', () => { loadRefeitorios(); loadFastPassSituacao(); modalFastPass.style.display = 'flex'; });
-  document.getElementById('cardAcessos').addEventListener('click', () => { loadAccesses(50); modalAcessos.style.display = 'flex'; });
-  document.getElementById('seeAllAccesses').addEventListener('click', () => { loadAccesses(50); modalAcessos.style.display = 'flex'; });
-  document.getElementById('showPhotoHint').addEventListener('click', () => modalBinary.style.display = 'flex');
+  document.getElementById('btnDeposit').addEventListener('click', () => openModal(modalDeposit));
+  document.getElementById('cardDeposit').addEventListener('click', () => openModal(modalDeposit));
+  document.getElementById('cardFastPass').addEventListener('click', () => { loadRefeitorios(); loadFastPassSituacao(); openModal(modalFastPass); });
+  document.getElementById('cardAcessos').addEventListener('click', () => { loadAccesses(50, 'acessosModalBody'); openModal(modalAcessos); });
+  document.getElementById('seeAllAccesses').addEventListener('click', () => { loadAccesses(50, 'acessosModalBody'); openModal(modalAcessos); });
+  document.getElementById('showPhotoHint').addEventListener('click', () => openModal(modalBinary));
   document.getElementById('seeAllFastPass').addEventListener('click', () => { loadBilhetes(); });
 
   // Close
-  document.getElementById('closeDeposit').addEventListener('click', () => modalDeposit.style.display = 'none');
-  document.getElementById('closeFastPass').addEventListener('click', () => modalFastPass.style.display = 'none');
-  document.getElementById('closeAcessos').addEventListener('click', () => modalAcessos.style.display = 'none');
-  document.getElementById('closeBinaryInfo').addEventListener('click', () => modalBinary.style.display = 'none');
+  document.getElementById('closeDeposit').addEventListener('click', () => closeModal(modalDeposit));
+  document.getElementById('closeFastPass').addEventListener('click', () => closeModal(modalFastPass));
+  document.getElementById('closeAcessos').addEventListener('click', () => closeModal(modalAcessos));
+  document.getElementById('closeBinaryInfo').addEventListener('click', () => closeModal(modalBinary));
 
   [modalDeposit, modalFastPass, modalAcessos, modalBinary].forEach(m => {
-    m.addEventListener('click', (e) => { if (e.target === m) m.style.display = 'none'; });
+    m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
   });
 }
 
@@ -780,7 +789,19 @@ document.getElementById('btnDownloadQR').addEventListener('click', () => {
 
 // ─── Init ──────────────────────────────────────────────────────────────────
 
+// Set default date to today
+function getTodayDate() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+  // Set default date for FastPass form
+  document.getElementById('fpData').value = getTodayDate();
+
   setupModais();
   setupDeposit();
   setupFastPass();
