@@ -146,7 +146,7 @@ def _seed_estudantes(cursor, cat_map):
     for i in range(N_ESTUDANTES):
         nome = _nome()
         email = f"{_slug(nome)}.{i}@aluno.unb.br"
-        categoria = random.choices([1, 2], weights=[1, 1])[0]
+        categoria = random.choices([1, 2, 4], weights=[1, 4, 2])[0]
         saldo = round(random.uniform(0, 40), 2)
         prioridade = random.random() < 0.1
 
@@ -202,7 +202,7 @@ def _seed_visitantes(cursor, cat_map):
         cursor.execute(
             "INSERT INTO Usuario_RU (nome, email, saldo_atual, prioridade_legal, foto_perfil, id_categoria) "
             "VALUES (%s, %s, %s, %s, %s, %s)",
-            (nome, email, saldo, False, None, 4),
+            (nome, email, saldo, False, None, 3),
         )
         uid = cursor.lastrowid
 
@@ -210,7 +210,7 @@ def _seed_visitantes(cursor, cat_map):
             "INSERT INTO Visitante (motivo_visita, id_usuario) VALUES (%s, %s)",
             (random.choice(MOTIVOS_VISITA), uid),
         )
-        cat_map[uid] = 4
+        cat_map[uid] = 3
         ids.append(uid)
     return ids
 
