@@ -16,10 +16,11 @@ QueryCatracaInfo = """
 """
 
 QueryFastPassValido = """
-    SELECT id_bilhete
+    SELECT id_bilhete, horario_inicio, horario_fim
     FROM Bilhete_FastPass
     WHERE id_usuario = %s
       AND status_uso = 'Pendente'
       AND id_refeitorio = %s
+      AND %s BETWEEN horario_inicio AND horario_fim
     LIMIT 1
 """
