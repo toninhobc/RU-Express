@@ -308,7 +308,7 @@ def extrato(
 def novo_acesso(usuario_id: int = Query(), catraca: int = Query(), db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
     
-    # Validate user exists
+    # Valida a existencia do usuario
     cursor.execute(QueryBalance, (usuario_id,))
     user = cursor.fetchone()
     if not user:
@@ -317,7 +317,7 @@ def novo_acesso(usuario_id: int = Query(), catraca: int = Query(), db=Depends(ge
     
     saldo_anterior = user["saldo_atual"]
     
-    # Validate catraca exists and get refeitorio info
+    # Valida existencia da catraca e pega as informacoes do refeitorio
     cursor.execute(QueryCatracaInfo, (catraca,))
     catraca_info = cursor.fetchone()
     if not catraca_info:
@@ -326,19 +326,19 @@ def novo_acesso(usuario_id: int = Query(), catraca: int = Query(), db=Depends(ge
     
     refeitorio_id = catraca_info["id_refeitorio"]
     
-    # Check for valid FastPass
+    # Checa se tem fastpass valido
     cursor.execute(QueryFastPassValido, (usuario_id, refeitorio_id))
     fastpass = cursor.fetchone()
     
     try:
-        # Insert access - trigger will handle valor_cobrado and saldo deduction
+        # Insert access - trigger cuida do valor cobrado
         cursor.execute(
             "INSERT INTO Acesso_RU (id_usuario, id_catraca, data_hora_entrada, valor_cobrado) VALUES (%s, %s, %s, NULL)",
             (usuario_id, catraca, datetime.now()),
         )
         db.commit()
         
-        # If FastPass was used, mark it as Utilizado
+        # Se usou fastpass, marca como utilizado
         if fastpass:
             cursor.execute(
                 "UPDATE Bilhete_FastPass SET status_uso = 'Utilizado' WHERE id_bilhete = %s",
@@ -346,11 +346,11 @@ def novo_acesso(usuario_id: int = Query(), catraca: int = Query(), db=Depends(ge
             )
             db.commit()
         
-        # Get updated balance
+        # Get do saldo atualizado
         cursor.execute(QuerySaldoAfterRecharge, (usuario_id,))
         saldo_row = cursor.fetchone()
         
-        # Get access info
+        # Get das informacoes de acesso
         cursor.execute(
             "SELECT tipo_refeicao, valor_cobrado FROM Acesso_RU WHERE id_usuario = %s ORDER BY id_acesso DESC LIMIT 1",
             (usuario_id,),
