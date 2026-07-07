@@ -27,6 +27,12 @@ from queries import (
     QueryUsuarioInsert,
     QueryUsuarioExists,
     QueryUsuarioDelete,
+    QueryCatracaInfo,
+    QueryFastPassValido,
+    QueryInscricaoInsert,
+    QuerySorteioByHorario,
+    QueryInscricaoExists,
+    QuerySorteiosDisponiveis,
 )
 
 VAGASFASTPASS = 20
@@ -298,6 +304,80 @@ def extrato(
     return {"extrato": rows}
 
 
+@app.post("/api/accesses")
+def novo_acesso(usuario_id: int = Query(), catraca: int = Query(), db=Depends(get_db)):
+    cursor = db.cursor(dictionary=True)
+    
+    # Valida a existencia do usuario
+    cursor.execute(QueryBalance, (usuario_id,))
+    user = cursor.fetchone()
+    if not user:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    saldo_anterior = user["saldo_atual"]
+    
+    # Valida existencia da catraca e pega as informacoes do refeitorio
+    cursor.execute(QueryCatracaInfo, (catraca,))
+    catraca_info = cursor.fetchone()
+    if not catraca_info:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Catraca não encontrada")
+    
+    refeitorio_id = catraca_info["id_refeitorio"]
+    
+    # Checa se tem fastpass valido
+    cursor.execute(QueryFastPassValido, (usuario_id, refeitorio_id))
+    fastpass = cursor.fetchone()
+    
+    try:
+        # Insert access - trigger cuida do valor cobrado
+        cursor.execute(
+            "INSERT INTO Acesso_RU (id_usuario, id_catraca, data_hora_entrada, valor_cobrado) VALUES (%s, %s, %s, NULL)",
+            (usuario_id, catraca, datetime.now()),
+        )
+        db.commit()
+        
+        # Se usou fastpass, marca como utilizado
+        if fastpass:
+            cursor.execute(
+                "UPDATE Bilhete_FastPass SET status_uso = 'Utilizado' WHERE id_bilhete = %s",
+                (fastpass["id_bilhete"],),
+            )
+            db.commit()
+        
+        # Get do saldo atualizado
+        cursor.execute(QuerySaldoAfterRecharge, (usuario_id,))
+        saldo_row = cursor.fetchone()
+        
+        # Get das informacoes de acesso
+        cursor.execute(
+            "SELECT tipo_refeicao, valor_cobrado FROM Acesso_RU WHERE id_usuario = %s ORDER BY id_acesso DESC LIMIT 1",
+            (usuario_id,),
+        )
+        acesso = cursor.fetchone()
+        
+    except Exception as e:
+        db.rollback()
+        cursor.close()
+        error_msg = str(e)
+        if "saldo_atual" in error_msg or "CHECK constraint" in error_msg or "128" in error_msg:
+            raise HTTPException(status_code=400, detail="Saldo insuficiente")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {error_msg}")
+    
+    cursor.close()
+    
+    return {
+        "sucesso": True,
+        "usuario": user["nome"],
+        "saldo_anterior": float(saldo_anterior),
+        "saldo_atual": float(saldo_row["saldo_atual"]) if saldo_row else float(saldo_anterior),
+        "valor_cobrado": float(acesso["valor_cobrado"]) if acesso and acesso["valor_cobrado"] else 0,
+        "tipo_refeicao": acesso["tipo_refeicao"] if acesso else "Desjejum",
+        "fastpass_usado": fastpass is not None,
+    }
+
+
 # ─── Admin ────────────────────────────────────────────────────────────────
 
 
@@ -425,3 +505,226 @@ def solicitar_fastpass(body: FastPassRequest, db=Depends(get_db)):
         "contemplado": False,
         "mensagem": "Não foi dessa vez. Suas chances aumentam no próximo sorteio.",
     }
+
+
+class UsarFastPassRequest(BaseModel):
+    usuario_id: int
+    id_bilhete: int
+
+
+@app.post("/api/fastpass/usar")
+def usar_fastpass(body: UsarFastPassRequest, db=Depends(get_db)):
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT id_usuario, status_uso FROM Bilhete_FastPass WHERE id_bilhete = %s",
+        (body.id_bilhete,),
+    )
+    bilhete = cursor.fetchone()
+
+    if not bilhete:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Bilhete não encontrado")
+
+    # Só o dono pode usar o próprio bilhete
+    if bilhete["id_usuario"] != body.usuario_id:
+        cursor.close()
+        raise HTTPException(status_code=403, detail="Este bilhete não é seu.")
+
+    # Só bilhete pendente pode ser usado (não Utilizado nem Expirado)
+    if bilhete["status_uso"] != "Pendente":
+        cursor.close()
+        raise HTTPException(
+            status_code=409,
+            detail=f"Bilhete não está disponível (status: {bilhete['status_uso']}).",
+        )
+
+    cursor.execute(
+        "UPDATE Bilhete_FastPass SET status_uso = 'Utilizado' WHERE id_bilhete = %s",
+        (body.id_bilhete,),
+    )
+    db.commit()
+    cursor.close()
+    return {"status": "utilizado"}
+
+
+class InscricaoFastPassRequest(BaseModel):
+    usuario_id: int
+    horario_inicio: str
+    horario_fim: str
+    refeitorio_id: int
+
+
+@app.post("/api/fastpass/inscrever")
+def inscrever_fastpass(body: InscricaoFastPassRequest, db=Depends(get_db)):
+    """Estudante se inscreve para concorrer a um FastPass num horário específico."""
+    cursor = db.cursor(dictionary=True)
+
+    # Só estudantes podem se inscrever
+    cursor.execute(
+        "SELECT id_usuario FROM Estudante WHERE id_usuario = %s", (body.usuario_id,)
+    )
+    if not cursor.fetchone():
+        cursor.close()
+        raise HTTPException(
+            status_code=403, detail="Apenas estudantes podem se inscrever."
+        )
+
+    # Verificar se já existe um sorteio para este horário
+    cursor.execute(QuerySorteioByHorario, (body.horario_inicio, body.horario_fim))
+    sorteio = cursor.fetchone()
+
+    # Se o sorteio já foi criado (horario_inicio já passou), não pode se inscrever
+    if sorteio:
+        if sorteio["horario_inicio"] <= datetime.now():
+            cursor.close()
+            raise HTTPException(
+                status_code=400,
+                detail="Prazo de inscrição encerrado: o horário do sorteio já passou.",
+            )
+
+        # Verificar se já está inscrito
+        cursor.execute(QueryInscricaoExists, (body.usuario_id, sorteio["id_sorteio"]))
+        if cursor.fetchone():
+            cursor.close()
+            raise HTTPException(
+                status_code=409, detail="Você já está inscrito neste sorteio."
+            )
+
+        id_sorteio = sorteio["id_sorteio"]
+    else:
+        # Criar o sorteio com data futura (ainda não executado, só registro)
+        cursor.execute(
+            "INSERT INTO Sorteio_Diario (horario_inicio, horario_fim, quantidade_vagas) "
+            "VALUES (%s, %s, %s)",
+            (body.horario_inicio, body.horario_fim, VAGASFASTPASS),
+        )
+        db.commit()
+        id_sorteio = cursor.lastrowid
+
+    # Inscrever o estudante
+    try:
+        cursor.execute(
+            QueryInscricaoInsert,
+            (body.usuario_id, id_sorteio, datetime.now()),
+        )
+        db.commit()
+    except mysql.connector.Error as e:
+        db.rollback()
+        cursor.close()
+        if e.errno == 1062:  # duplicate entry (UNIQUE constraint)
+            raise HTTPException(
+                status_code=409, detail="Inscrição duplicada."
+            )
+        raise
+
+    cursor.close()
+    return {
+        "status": "inscrito",
+        "id_sorteio": id_sorteio,
+        "mensagem": "Inscrição realizada com sucesso! Aguarde o sorteio."
+    }
+
+
+@app.post("/api/fastpass/executar-sorteio")
+def executar_sorteio(body: InscricaoFastPassRequest, db=Depends(get_db)):
+    """Executa o sorteio do FastPass entre os inscritos para um determinado horário."""
+    cursor = db.cursor(dictionary=True)
+
+    # Verificar se o horário já passou (só pode executar sorteio após o prazo de inscrição)
+    horario_inicio_dt = datetime.strptime(body.horario_inicio, "%Y-%m-%d %H:%M:%S")
+    if horario_inicio_dt > datetime.now():
+        cursor.close()
+        raise HTTPException(
+            status_code=400,
+            detail="O sorteio só pode ser executado após o horário de início.",
+        )
+
+    try:
+        cursor.callproc(
+            "Executar_Sorteio_FastPass",
+            (
+                body.horario_inicio,
+                body.horario_fim,
+                VAGASFASTPASS,
+                body.refeitorio_id,
+            ),
+        )
+        db.commit()
+    except mysql.connector.Error as e:
+        db.rollback()
+        cursor.close()
+        error_msg = str(e)
+        if "já foi executado" in error_msg:
+            raise HTTPException(status_code=409, detail=error_msg)
+        if "Nenhum estudante" in error_msg:
+            raise HTTPException(status_code=400, detail=error_msg)
+        raise HTTPException(status_code=500, detail=f"Erro interno: {error_msg}")
+
+    # Buscar os ganhadores
+    cursor.execute(QuerySorteioByHorario, (body.horario_inicio, body.horario_fim))
+    sorteio = cursor.fetchone()
+
+    cursor.execute(
+        """
+        SELECT b.id_bilhete, b.id_usuario, u.nome
+        FROM Bilhete_FastPass b
+        JOIN Usuario_RU u ON b.id_usuario = u.id_usuario
+        WHERE b.id_sorteio = %s
+        """,
+        (sorteio["id_sorteio"],),
+    )
+    ganhadores = cursor.fetchall()
+    cursor.close()
+
+    return {
+        "status": "sorteio_realizado",
+        "id_sorteio": sorteio["id_sorteio"],
+        "total_vagas": VAGASFASTPASS,
+        "total_ganhadores": len(ganhadores),
+        "ganhadores": [
+            {"id_bilhete": g["id_bilhete"], "id_usuario": g["id_usuario"], "nome": g["nome"]}
+            for g in ganhadores
+        ],
+    }
+
+
+@app.get("/api/fastpass/sorteios-disponiveis")
+def listar_sorteios_disponiveis(db=Depends(get_db)):
+    """Lista sorteios futuros disponíveis para inscrição."""
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(QuerySorteiosDisponiveis)
+    rows = cursor.fetchall()
+    cursor.close()
+    return {"sorteios": rows}
+
+
+@app.get("/api/fastpass/verificar-resultado")
+def verificar_resultado(
+    usuario_id: int = Query(),
+    horario_inicio: str = Query(),
+    horario_fim: str = Query(),
+    db=Depends(get_db),
+):
+    """Estudante verifica se foi contemplado no sorteio."""
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(QuerySorteioByHorario, (horario_inicio, horario_fim))
+    sorteio = cursor.fetchone()
+    if not sorteio:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Sorteio não encontrado para este horário.")
+
+    cursor.execute(
+        """
+        SELECT b.id_bilhete, b.horario_inicio, b.horario_fim, b.status_uso
+        FROM Bilhete_FastPass b
+        WHERE b.id_sorteio = %s AND b.id_usuario = %s
+        """,
+        (sorteio["id_sorteio"], usuario_id),
+    )
+    bilhete = cursor.fetchone()
+    cursor.close()
+
+    if bilhete:
+        return {"contemplado": True, "bilhete": bilhete}
+    return {"contemplado": False, "mensagem": "Você não foi contemplado neste sorteio."}
