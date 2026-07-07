@@ -849,45 +849,26 @@ async function loadBilhetes() {
       const fim = formatTime(b.horario_fim);
       const dataStr = `${inicio}–${fim} · ${b.nome_refeitorio}`;
 
+      // Rótulo e cor por status (o consumo do passe acontece na catraca)
       let badgeClass = 'badge-gray';
-      if (b.status_uso === 'Utilizado') badgeClass = 'badge-green';
-      else if (b.status_uso === 'Pendente') badgeClass = 'badge-yellow';
-      else if (b.status_uso === 'Expirado') badgeClass = 'badge-red';
+      let rotulo = b.status_uso;
+      if (b.status_uso === 'Pendente') { badgeClass = 'badge-green'; rotulo = 'Disponível'; }
+      else if (b.status_uso === 'Utilizado') { badgeClass = 'badge-gray'; rotulo = 'Utilizado'; }
+      else if (b.status_uso === 'Expirado') { badgeClass = 'badge-red'; rotulo = 'Expirado'; }
 
-      const usavel = b.status_uso === 'Pendente';
       const div = document.createElement('div');
       div.className = 'fastpass-card';
       div.innerHTML = `
         <div class="info">
           <div class="date">${dataStr}</div>
-          <div class="status"><span class="badge ${badgeClass}">${b.status_uso}</span></div>
+          <div class="status"><span class="badge ${badgeClass}">${rotulo}</span></div>
           <div class="ref">Sorteio #${String(b.id_sorteio).padStart(3, '0')}</div>
         </div>
-        <span class="btn btn-sm usar-btn" style="${usavel ? 'cursor:pointer;' : 'opacity:0.4;'}">${usavel ? '➤ Usar Agora' : b.status_uso.toLowerCase()}</span>
       `;
-      if (usavel) {
-        div.querySelector('.usar-btn').addEventListener('click', () => usarBilhete(b.id_bilhete));
-      }
       container.appendChild(div);
     });
   } catch (err) {
     console.error('Bilhetes:', err);
-  }
-}
-
-async function usarBilhete(idBilhete) {
-  try {
-    const res = await fetch(`${API}/fastpass/usar`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario_id: USUARIO_ID, id_bilhete: idBilhete })
-    });
-    const result = await res.json();
-    if (!res.ok) { showToast(result.detail || 'Erro ao usar bilhete', false); return; }
-    showToast('FastPass utilizado! ✓');
-    loadBilhetes();
-  } catch (err) {
-    showToast('Erro de conexão', false);
   }
 }
 
