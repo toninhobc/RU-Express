@@ -51,7 +51,7 @@ source .venv/bin/activate
 ```
 
 ```
-pip install fastapi uvicorn python-dotenv mysql-connector-python
+pip install fastapi uvicorn python-dotenv mysql-connector-python python-multipart
 ```
 
 ```
