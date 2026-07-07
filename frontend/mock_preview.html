@@ -262,7 +262,6 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
         <span>aguarde <strong>...</strong></span>
       </div>
       <div style="margin-top:4px;">
-        <span class="photo-hint" id="showPhotoHint">ver dados binários →</span>
       </div>
     </div>
   </div>
@@ -456,35 +455,6 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
       </div>
       <div class="modal-actions">
         <span class="btn" id="closeExtrato">Fechar</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Binary Data Info Modal -->
-  <div class="modal-overlay" id="modalBinaryInfo">
-    <div class="modal">
-      <h2>📷 Foto de Perfil (BLOB)</h2>
-      <p style="color: var(--color-ash); font-size: 12px; margin-bottom: var(--spacing-16);">
-        Dado binário armazenado no banco de dados.
-      </p>
-      <div class="form-group">
-        <label>Tabela</label>
-        <div class="input">Usuario_RU · coluna <strong>foto_perfil</strong></div>
-      </div>
-      <div class="form-group">
-        <label>Tipo</label>
-        <div class="input">BLOB (Binary Large Object)</div>
-      </div>
-      <div class="form-group">
-        <label>Valor HEX (dummy)</label>
-        <div class="input" style="font-size: 11px; word-break: break-all;">0x89504E47 0D0A1A0A 0000000D 49484452 000000...</div>
-      </div>
-      <div class="form-group">
-        <label>Preview simulado</label>
-        <div style="width: 120px; height: 120px; background: var(--color-void); border-radius: var(--radius); border: 1px solid var(--color-graphite); display: flex; align-items: center; justify-content: center; font-size: 48px;">👤</div>
-      </div>
-      <div class="modal-actions">
-        <span class="btn" id="closeBinaryInfo">Fechar</span>
       </div>
     </div>
   </div>
@@ -958,7 +928,6 @@ function setupModais() {
   const modalDeposit = document.getElementById('modalDeposit');
   const modalFastPass = document.getElementById('modalFastPass');
   const modalAcessos = document.getElementById('modalAcessos');
-  const modalBinary = document.getElementById('modalBinaryInfo');
   const modalPerfil = document.getElementById('modalPerfil');
   const modalExtrato = document.getElementById('modalExtrato');
 
@@ -971,7 +940,6 @@ function setupModais() {
   document.getElementById('cardFastPass').addEventListener('click', () => { loadRefeitorios(); loadFastPassSituacao(); openModal(modalFastPass); });
   document.getElementById('cardAcessos').addEventListener('click', () => { loadAccesses(50, 'acessosModalBody'); openModal(modalAcessos); });
   document.getElementById('seeAllAccesses').addEventListener('click', () => { loadAccesses(50, 'acessosModalBody'); openModal(modalAcessos); });
-  document.getElementById('showPhotoHint').addEventListener('click', () => openModal(modalBinary));
   document.getElementById('seeAllFastPass').addEventListener('click', () => { loadBilhetes(); });
   document.getElementById('btnHistory').addEventListener('click', () => { loadExtrato(); openModal(modalExtrato); });
 
@@ -984,11 +952,10 @@ function setupModais() {
   document.getElementById('closeDeposit').addEventListener('click', () => closeModal(modalDeposit));
   document.getElementById('closeFastPass').addEventListener('click', () => closeModal(modalFastPass));
   document.getElementById('closeAcessos').addEventListener('click', () => closeModal(modalAcessos));
-  document.getElementById('closeBinaryInfo').addEventListener('click', () => closeModal(modalBinary));
   document.getElementById('closePerfil').addEventListener('click', () => closeModal(modalPerfil));
   document.getElementById('closeExtrato').addEventListener('click', () => closeModal(modalExtrato));
 
-  [modalDeposit, modalFastPass, modalAcessos, modalBinary, modalPerfil, modalExtrato].forEach(m => {
+  [modalDeposit, modalFastPass, modalAcessos, modalPerfil, modalExtrato].forEach(m => {
     m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
   });
 }

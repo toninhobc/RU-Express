@@ -146,7 +146,7 @@ def _seed_estudantes(cursor, cat_map):
     for i in range(N_ESTUDANTES):
         nome = _nome()
         email = f"{_slug(nome)}.{i}@aluno.unb.br"
-        categoria = random.choices([1, 2], weights=[3, 1])[0]
+        categoria = random.choices([1, 2], weights=[1, 1])[0]
         saldo = round(random.uniform(0, 40), 2)
         prioridade = random.random() < 0.1
 
