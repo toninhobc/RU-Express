@@ -52,6 +52,7 @@ app.add_middleware(
 frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 
+
 @app.get("/", response_class=HTMLResponse)
 def serve_frontend():
     with open(os.path.join(frontend_path, "mock_preview.html"), encoding="utf-8") as f:
@@ -70,7 +71,7 @@ def profile(usuario_id: int = Query(), db=Depends(get_db)):
 
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
-    
+
     foto_bytes = usuario.pop("foto_perfil", None)
 
     # Limpa os nulos vindos do LEFT JOIN para deixar o JSON bonito
@@ -80,16 +81,21 @@ def profile(usuario_id: int = Query(), db=Depends(get_db)):
 
     usuario_limpo["tem_foto_perfil"] = foto_bytes is not None
     if foto_bytes:
-        usuario_limpo["foto_perfil_base64"] = base64.b64encode(foto_bytes).decode("ascii")
+        usuario_limpo["foto_perfil_base64"] = base64.b64encode(foto_bytes).decode(
+            "ascii"
+        )
 
     return {"usuario": usuario_limpo}
+
 
 MAX_FOTO_BYTES = 2 * 1024 * 1024  # 2 MB
 TIPOS_PERMITIDOS = {"image/jpeg", "image/png", "image/webp"}
 
 
 @app.post("/api/usuarios/{usuario_id}/foto")
-async def upload_foto(usuario_id: int, foto: UploadFile = File(...), db=Depends(get_db)):
+async def upload_foto(
+    usuario_id: int, foto: UploadFile = File(...), db=Depends(get_db)
+):
     if foto.content_type not in TIPOS_PERMITIDOS:
         raise HTTPException(
             status_code=400,
@@ -114,6 +120,7 @@ async def upload_foto(usuario_id: int, foto: UploadFile = File(...), db=Depends(
     db.commit()
     cursor.close()
     return {"status": "foto atualizada"}
+
 
 class UsuarioCreate(BaseModel):
     nome: str
@@ -290,6 +297,7 @@ def extrato(
     cursor.close()
     return {"extrato": rows}
 
+
 @app.post("/api/accesses")
 def novo_acesso(usuario_id: int = Query(), catraca: int = Query()):
     pass
@@ -362,14 +370,12 @@ class FastPassRequest(BaseModel):
     refeitorio_id: int
     horario_inicio: str
     horario_fim: str
-    vagas: int = VAGASFASTPASS
 
 
-@app.post("/api/fastpass/solicitar", status_code=status.HTTP_201_CREATED)
+@app.post("/api/fastpass/solicitar")
 def solicitar_fastpass(body: FastPassRequest, db=Depends(get_db)):
+    # Só estudantes participam do sorteio
     cursor = db.cursor(dictionary=True)
-
-    # validacao estudante
     cursor.execute(
         "SELECT id_usuario FROM Estudante WHERE id_usuario = %s", (body.usuario_id,)
     )
@@ -379,32 +385,48 @@ def solicitar_fastpass(body: FastPassRequest, db=Depends(get_db)):
             status_code=403, detail="Apenas estudantes podem participar."
         )
 
-    # validacao sorteio na msm faixa
     cursor.execute(
-        """
-        SELECT id_sorteio FROM Sorteio_Diario 
-        WHERE horario_inicio = %s AND horario_fim = %s
-    """,
+        "SELECT id_sorteio FROM Sorteio_Diario WHERE horario_inicio = %s AND horario_fim = %s",
         (body.horario_inicio, body.horario_fim),
     )
-
-    if cursor.fetchone():
-        cursor.close()
-        raise HTTPException(
-            status_code=409, detail="Sorteio já existente para esta faixa."
-        )
-
-    # executa a Procedure com commit/rollback
-    try:
-        cursor.callproc(
-            "Gerar_Sorteio_FastPass",
-            (body.horario_inicio, body.horario_fim, body.vagas, body.refeitorio_id),
-        )
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        cursor.close()
-        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
-
+    ja_sorteado = cursor.fetchone()
     cursor.close()
-    return {"status": "sorteio realizado com sucesso"}
+
+    if not ja_sorteado:
+        cursor = db.cursor()
+        try:
+            cursor.callproc(
+                "Gerar_Sorteio_FastPass",
+                (
+                    body.horario_inicio,
+                    body.horario_fim,
+                    VAGASFASTPASS,
+                    body.refeitorio_id,
+                ),
+            )
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            cursor.close()
+            raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+        cursor.close()
+
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        """
+        SELECT b.id_bilhete, b.horario_inicio, b.horario_fim, b.status_uso, b.id_sorteio
+        FROM Bilhete_FastPass b
+        JOIN Sorteio_Diario s ON b.id_sorteio = s.id_sorteio
+        WHERE s.horario_inicio = %s AND s.horario_fim = %s AND b.id_usuario = %s
+        """,
+        (body.horario_inicio, body.horario_fim, body.usuario_id),
+    )
+    bilhete = cursor.fetchone()
+    cursor.close()
+
+    if bilhete:
+        return {"contemplado": True, "bilhete": bilhete}
+    return {
+        "contemplado": False,
+        "mensagem": "Não foi dessa vez. Suas chances aumentam no próximo sorteio.",
+    }

@@ -908,6 +908,8 @@ function setupFastPass() {
         body: JSON.stringify({ usuario_id: USUARIO_ID, refeitorio_id, horario_inicio, horario_fim })
       });
       const result = await res.json();
+
+      // Erro de verdade (ex.: 403 não-estudante, 500)
       if (!res.ok) {
         feedback.style.display = 'block';
         feedback.style.color = 'var(--color-red)';
@@ -915,9 +917,21 @@ function setupFastPass() {
         feedback.textContent = result.detail || 'Erro ao solicitar';
         return;
       }
-      showToast('Sorteio realizado! Verifique seus bilhetes.');
-      document.getElementById('modalFastPass').classList.remove('show');
+
+      // Sorteio rodou (ou já havia rodado): mostra se este aluno foi contemplado
+      feedback.style.display = 'block';
+      if (result.contemplado) {
+        feedback.style.color = 'var(--color-green)';
+        feedback.style.border = '1px solid var(--color-green)';
+        feedback.textContent = '🎉 Você foi contemplado! O bilhete está em Meus Bilhetes.';
+        showToast('FastPass conquistado!');
+      } else {
+        feedback.style.color = 'var(--color-yellow)';
+        feedback.style.border = '1px solid var(--color-yellow)';
+        feedback.textContent = result.mensagem || 'Não foi dessa vez. Suas chances aumentam no próximo sorteio.';
+      }
       loadBilhetes();
+      loadFastPassSituacao();
     } catch (err) {
       showToast('Erro de conexão', false);
     }
