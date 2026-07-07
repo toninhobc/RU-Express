@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS Campus (
 CREATE TABLE IF NOT EXISTS Grupo_Acesso (
     id_categoria INT AUTO_INCREMENT,
     nome_categoria VARCHAR(100) NOT NULL,
-    valor_refeicao FLOAT NOT NULL,
-    valor_desjejum FLOAT NOT NULL,
+    valor_refeicao Decimal(5, 2) NOT NULL,
+    valor_desjejum Decimal(5, 2) NOT NULL,
 
     PRIMARY KEY (id_categoria)
 );
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS Restaurante_Universitario (
     id_campus INT NOT NULL,
 
     PRIMARY KEY (id_ru),
-    FOREIGN KEY (id_campus) REFERENCES Campus(id_campus)
+    FOREIGN KEY (id_campus) REFERENCES Campus(id_campus) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Refeitorio (
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS Refeitorio (
     id_ru INT NOT NULL,
 
     PRIMARY KEY (id_refeitorio),
-    FOREIGN KEY (id_ru) REFERENCES Restaurante_Universitario(id_ru)
+    FOREIGN KEY (id_ru) REFERENCES Restaurante_Universitario(id_ru) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Catraca (
@@ -58,14 +58,14 @@ CREATE TABLE IF NOT EXISTS Catraca (
     id_refeitorio INT NOT NULL,
 
     PRIMARY KEY (id_catraca),
-    FOREIGN KEY (id_refeitorio) REFERENCES Refeitorio(id_refeitorio)
+    FOREIGN KEY (id_refeitorio) REFERENCES Refeitorio(id_refeitorio) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Usuario_RU (
     id_usuario INT AUTO_INCREMENT,
     nome VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    saldo_atual FLOAT NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    saldo_atual Decimal(5, 2) NOT NULL CHECK (saldo_atual >= 0),
     prioridade_legal BOOLEAN NOT NULL,
     foto_perfil BLOB,
     id_categoria INT NOT NULL,
@@ -75,12 +75,12 @@ CREATE TABLE IF NOT EXISTS Usuario_RU (
 );
 
 CREATE TABLE IF NOT EXISTS Estudante (
-    matricula INT NOT NULL,
+    matricula INT NOT NULL UNIQUE,
     dias_sem_fastpass INT NOT NULL,
     id_usuario INT NOT NULL,
 
     PRIMARY KEY (id_usuario),
-    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Documentacao_Assistencia (
@@ -91,16 +91,16 @@ CREATE TABLE IF NOT EXISTS Documentacao_Assistencia (
     id_usuario INT NOT NULL,
 
     PRIMARY KEY (id_documento),
-    FOREIGN KEY (id_usuario) REFERENCES Estudante(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Estudante(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Servidor_Docente (
-    siape INT NOT NULL,
+    siape INT NOT NULL UNIQUE,
     departamento VARCHAR(100) NOT NULL,
     id_usuario INT NOT NULL,
 
     PRIMARY KEY (id_usuario),
-    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Visitante (
@@ -108,12 +108,12 @@ CREATE TABLE IF NOT EXISTS Visitante (
     id_usuario INT NOT NULL,
 
     PRIMARY KEY (id_usuario),
-    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Recarga_Saldo (
     id_recarga INT AUTO_INCREMENT,
-    valor_adicionado FLOAT NOT NULL,
+    valor_adicionado Decimal(5, 2) NOT NULL,
     data_hora_recarga DATETIME NOT NULL,
     metodo_pagamento VARCHAR(100) NOT NULL,
     id_usuario INT NOT NULL,
@@ -125,8 +125,9 @@ CREATE TABLE IF NOT EXISTS Recarga_Saldo (
 CREATE TABLE IF NOT EXISTS Acesso_RU (
     id_acesso INT AUTO_INCREMENT,
     data_hora_entrada DATETIME NOT NULL,
-    valor_cobrado FLOAT,
-    peso_prato_kg FLOAT,
+    tipo_refeicao VARCHAR(20) NOT NULL,  -- derivado do horário pelo trigger trg_cobrar_acesso
+    valor_cobrado Decimal(5, 2),
+    peso_prato_kg Decimal(5, 2),
     id_usuario INT NOT NULL,
     id_catraca INT NOT NULL,
 
@@ -162,6 +163,58 @@ FOR EACH ROW
 BEGIN
     UPDATE Usuario_RU
     SET saldo_atual = saldo_atual + NEW.valor_adicionado
+    WHERE id_usuario = NEW.id_usuario;
+END //
+
+DELIMITER ;
+
+-- =======================================================
+-- TRIGGER: Cobrança na catraca
+-- Deriva o tipo de refeição pelo horário da passagem (antes das 10h =
+-- desjejum). Nos refeitórios Padrão o valor é o preço fixo do grupo;
+-- no Executivo (itens variados) o valor_cobrado é obrigatório no INSERT
+-- (senão levanta erro). Registra tipo_refeicao e debita o saldo.
+-- =======================================================
+
+DELIMITER //
+
+CREATE TRIGGER IF NOT EXISTS trg_cobrar_acesso
+BEFORE INSERT ON Acesso_RU
+FOR EACH ROW
+BEGIN
+    DECLARE v_servico VARCHAR(100);
+
+    -- Tipo de refeição vem do horário: antes das 10h = desjejum, senão refeição
+    SET NEW.tipo_refeicao = IF(HOUR(NEW.data_hora_entrada) < 10, 'Desjejum', 'Refeicao');
+
+    -- Tipo de serviço do refeitório onde fica a catraca
+    SELECT r.tipo_servico
+    INTO v_servico
+    FROM Catraca c
+    JOIN Refeitorio r ON c.id_refeitorio = r.id_refeitorio
+    WHERE c.id_catraca = NEW.id_catraca;
+
+    IF v_servico = 'Executivo' THEN
+        -- Executivo: valor_cobrado é obrigatório (itens variados, sem preço fixo)
+        IF NEW.valor_cobrado IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'valor_cobrado é obrigatório em refeitório Executivo';
+        END IF;
+    ELSE
+        -- Padrão: preço fixo do Grupo_Acesso do usuário, conforme o tipo
+        SET NEW.valor_cobrado = (
+            SELECT CASE
+                       WHEN NEW.tipo_refeicao = 'Desjejum' THEN g.valor_desjejum
+                       ELSE g.valor_refeicao
+                   END
+            FROM Usuario_RU u
+            JOIN Grupo_Acesso g ON u.id_categoria = g.id_categoria
+            WHERE u.id_usuario = NEW.id_usuario
+        );
+    END IF;
+
+    UPDATE Usuario_RU
+    SET saldo_atual = saldo_atual - NEW.valor_cobrado
     WHERE id_usuario = NEW.id_usuario;
 END //
 
@@ -228,7 +281,7 @@ DELIMITER ;
 -- =======================================================
 
 -- View: fluxo de pessoas e faturamento por refeitório
-CREATE VIEW IF NOT EXISTS vw_relatorio_fluxo_ru AS
+CREATE OR REPLACE VIEW vw_relatorio_fluxo_ru AS
 SELECT 
     r.nome_refeitorio, 
     r.tipo_servico, 

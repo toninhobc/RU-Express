@@ -5,6 +5,7 @@ QueryUser = """
             u.email, 
             u.saldo_atual, 
             u.prioridade_legal, 
+            u.foto_perfil,
             g.nome_categoria AS categoria, 
             g.valor_refeicao, 
             g.valor_desjejum,
@@ -20,6 +21,8 @@ QueryUser = """
         LEFT JOIN Visitante v ON u.id_usuario = v.id_usuario
         WHERE u.id_usuario = %s;
         """
+        
+
 
 QueryBalance = """
         SELECT
@@ -34,9 +37,10 @@ QueryBalance = """
         """
 
 QueryAcessos = """
-        SELECT 
+        SELECT
             a.id_acesso,
             a.data_hora_entrada,
+            a.tipo_refeicao,
             a.valor_cobrado,
             a.peso_prato_kg,
             c.id_catraca,
@@ -52,6 +56,18 @@ QueryAcessos = """
 
         LIMIT %s OFFSET %s;
         """
+
+QueryAdminUsuariosBase = """
+    SELECT
+        id_usuario,
+        nome,
+        email,
+        saldo_atual,
+        prioridade_legal,
+        id_categoria
+    FROM Usuario_RU
+    WHERE 1=1
+"""
 
 QueryBilheteBase = """
     SELECT 
@@ -74,14 +90,31 @@ QueryRelatorioFluxo = """
     FROM vw_relatorio_fluxo_ru;
 """
 
-QueryAdminUsuariosBase = """
-    SELECT
-        id_usuario,
-        nome,
-        email,
-        saldo_atual,
-        prioridade_legal,
-        id_categoria
-    FROM Usuario_RU
-    WHERE 1=1
+QueryRefeitorios = """
+    SELECT r.id_refeitorio, r.nome_refeitorio, r.tipo_servico, ru.nome_ru
+    FROM Refeitorio r
+    JOIN Restaurante_Universitario ru ON r.id_ru = ru.id_ru
+    ORDER BY ru.nome_ru, r.nome_refeitorio
+"""
+
+QueryRechargeInsert = """
+    INSERT INTO Recarga_Saldo (valor_adicionado, data_hora_recarga, metodo_pagamento, id_usuario)
+    VALUES (%s, %s, %s, %s)
+"""
+
+QuerySaldoAfterRecharge = """
+    SELECT saldo_atual FROM Usuario_RU WHERE id_usuario = %s
+"""
+
+QueryUsuarioInsert = """
+    INSERT INTO Usuario_RU (nome, email, saldo_atual, prioridade_legal, foto_perfil, id_categoria)
+    VALUES (%s, %s, 0, %s, NULL, %s)
+"""
+
+QueryUsuarioExists = """
+    SELECT 1 FROM Usuario_RU WHERE id_usuario = %s
+"""
+
+QueryUsuarioDelete = """
+    DELETE FROM Usuario_RU WHERE id_usuario = %s
 """

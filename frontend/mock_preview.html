@@ -132,7 +132,7 @@ body {
   color: var(--color-bone);
   font-family: var(--font-mono);
   font-size: 12px;
-  cursor: default;
+  cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
 }
@@ -156,7 +156,7 @@ body {
   border-radius: var(--radius);
   padding: var(--spacing-19);
   text-align: center;
-  cursor: default;
+  cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.15s;
 }
@@ -167,7 +167,7 @@ body {
 
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-16); }
 .section-header h2 { font-size: 14px; font-weight: 400; }
-.section-header .link { color: var(--color-ash); font-size: 11px; cursor: default; }
+.section-header .link { color: var(--color-ash); font-size: 11px; cursor: pointer; }
 .section-header .link:hover { color: var(--color-bone); }
 
 .table-container { background: var(--color-carbon); border-radius: var(--radius); overflow: hidden; margin-bottom: var(--spacing-32); }
@@ -192,11 +192,13 @@ table.data .tiny { font-size: 11px; color: var(--color-ash); }
 
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 100; }
 .modal-overlay.show { display: flex; }
-.modal { background: var(--color-carbon); border-radius: var(--radius); padding: var(--spacing-27); max-width: 440px; width: 100%; border: 1px solid var(--color-graphite); }
+.modal { background: var(--color-carbon); border-radius: var(--radius); padding: var(--spacing-27); max-width: 440px; width: 100%; border: 1px solid var(--color-graphite); max-height: 90vh; overflow-y: auto; }
 .modal h2 { font-size: 16px; font-weight: 400; margin-bottom: var(--spacing-19); }
 .modal .form-group { margin-bottom: var(--spacing-16); }
 .modal .form-group label { display: block; color: var(--color-ash); font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.modal .form-group select,
 .modal .form-group .input { display: block; width: 100%; padding: 8px 12px; background: var(--color-void); border: 1px solid var(--color-graphite); border-radius: var(--radius); color: var(--color-bone); font-family: var(--font-mono); font-size: 13px; }
+.modal .form-group select option { background: var(--color-carbon); color: var(--color-bone); }
 .modal .form-group .input::placeholder { color: var(--color-ash); }
 .modal .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-16); }
 .modal .modal-actions { display: flex; justify-content: flex-end; gap: var(--spacing-16); margin-top: var(--spacing-27); }
@@ -216,11 +218,20 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
 .admin-toggle:hover { color: var(--color-ash); }
 
 .amount-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.amount-pill { padding: 4px 12px; border: 1px solid var(--color-graphite); border-radius: var(--radius); font-family: var(--font-mono); font-size: 12px; color: var(--color-ash); background: transparent; cursor: default; }
+.amount-pill { padding: 4px 12px; border: 1px solid var(--color-graphite); border-radius: var(--radius); font-family: var(--font-mono); font-size: 12px; color: var(--color-ash); background: transparent; cursor: pointer; }
 .amount-pill:hover { color: var(--color-bone); border-color: var(--color-bone); }
 
-.photo-hint { font-size: 10px; color: var(--color-ash); margin-top: 4px; cursor: default; }
+.photo-hint { font-size: 10px; color: var(--color-ash); margin-top: 4px; cursor: default; display: inline-block; }
 .photo-hint:hover { color: var(--color-bone); }
+
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  background: var(--color-carbon); border: 1px solid var(--color-graphite);
+  border-radius: var(--radius); padding: 12px 24px;
+  font-size: 12px; color: var(--color-bone);
+  z-index: 200; display: none;
+}
+.toast.show { display: block; }
 </style>
 </head>
 <body>
@@ -230,26 +241,28 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
   <div class="nav">
     <div class="nav-brand"><span>≡</span> RU·EXPRESS</div>
     <div class="nav-right">
-      <span class="nav-link active">👤 usuário</span>
+      <span class="nav-link active" id="navPerfilBtn" style="cursor:pointer;">👤 perfil</span>
       <span class="nav-link">⚙ admin</span>
     </div>
   </div>
 
   <div class="profile-card">
     <div class="profile-avatar" id="profileAvatar">
-      <div class="placeholder">
+      <div class="placeholder" id="avatarPlaceholder">
         <span class="icon">📸</span>
-        <span class="label">BLOB · 12 KB</span>
+        <span class="label">sem foto</span>
       </div>
+      <img id="avatarImg" style="display:none;">
     </div>
+    <input type="file" id="fotoInput" accept="image/png, image/jpeg, image/webp" style="display:none;">
     <div class="profile-info">
-      <h1>Antonio Coelho</h1>
-      <div class="email">antonio@aluno.unb.br</div>
+      <h1>Carregando...</h1>
+      <div class="email">—</div>
       <div class="meta">
-        <span>matrícula <strong>221000001</strong></span>
-        <span>categoria <strong>Estudante Padrão</strong></span>
-        <span>prioridade legal <strong>—</strong></span>
-        <span class="photo-hint" id="showPhotoHint">📷 0x89504E47</span>
+        <span>aguarde <strong>...</strong></span>
+      </div>
+      <div style="margin-top:4px;">
+        <span class="photo-hint" id="showPhotoHint">ver dados binários →</span>
       </div>
     </div>
   </div>
@@ -257,7 +270,7 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
   <div class="balance-card">
     <div class="balance-left">
       <div class="label">Saldo Disponível</div>
-      <div class="value">R$ 50<small>,00</small></div>
+      <div class="value">R$ —<small>,—</small></div>
       <div class="type">Válido para refeições e desjejuns</div>
     </div>
     <div class="balance-right">
@@ -268,8 +281,8 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
 
   <div class="status-bar">
     <span><span class="dot"></span>catraca ativa</span>
-    <span>último acesso: 25/06/2026 11:30</span>
-    <span>2 FastPass pendentes</span>
+    <span>último acesso: <span id="lastAccess">—</span></span>
+    <span><span id="pendentesCount">0</span> FastPass pendentes</span>
   </div>
 
   <div class="qr-card">
@@ -278,7 +291,7 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
       <div class="title">🎫 Carteirinha Digital</div>
       <div class="desc">
         Apresente o QR code na catraca para identificar-se.<br>
-        ID: <strong>USUARIO_001</strong> · Matrícula: <strong>221000001</strong><br>
+        ID: <strong id="qrUserId">—</strong> · Matrícula: <strong id="qrMatricula">—</strong><br>
         Validade: vinculada ao seu vínculo ativo.
       </div>
       <span class="btn btn-sm btn-success" id="btnRegenerateQR">↻ Regenerar QR</span>
@@ -305,51 +318,13 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
     </div>
   </div>
 
-  <div class="section-header"><h2>MEUS FASTPASS</h2><span class="link">ver todos →</span></div>
-
-  <div class="fastpass-card">
-    <div class="info">
-      <div class="date">25/06/2026 · 11:30–11:40 · Refeitório 1</div>
-      <div class="status"><span class="badge badge-green">Utilizado</span> entrada 11:30</div>
-      <div class="ref">Sorteio #001 · 20 vagas</div>
+  <div class="section-header"><h2>MEUS FASTPASS</h2><span class="link" id="seeAllFastPass">ver todos →</span></div>
+  <div id="bilhetesContainer">
+    <div class="fastpass-card">
+      <div class="info">
+        <div class="date">Carregando...</div>
+      </div>
     </div>
-    <span class="btn btn-sm" style="opacity:0.4;">concluído</span>
-  </div>
-
-  <div class="fastpass-card">
-    <div class="info">
-      <div class="date">25/06/2026 · 12:00–12:10 · Refeitório 2</div>
-      <div class="status"><span class="badge badge-green">Utilizado</span> entrada 12:00</div>
-      <div class="ref">Sorteio #002 · 30 vagas</div>
-    </div>
-    <span class="btn btn-sm" style="opacity:0.4;">concluído</span>
-  </div>
-
-  <div class="fastpass-card">
-    <div class="info">
-      <div class="date">26/06/2026 · 11:30–11:40 · Refeitório 1</div>
-      <div class="status"><span class="badge badge-yellow">Pendente</span> aguardando uso</div>
-      <div class="ref">Sorteio #003 · 25 vagas</div>
-    </div>
-    <span class="btn btn-sm btn-success">➤ Usar Agora</span>
-  </div>
-
-  <div class="fastpass-card">
-    <div class="info">
-      <div class="date">26/06/2026 · 12:00–12:10 · Refeitório 2</div>
-      <div class="status"><span class="badge badge-yellow">Pendente</span> aguardando uso</div>
-      <div class="ref">Sorteio #004 · 35 vagas</div>
-    </div>
-    <span class="btn btn-sm btn-success">➤ Usar Agora</span>
-  </div>
-
-  <div class="fastpass-card">
-    <div class="info">
-      <div class="date">27/06/2026 · 12:00–12:10 · Refeitório 4</div>
-      <div class="status"><span class="badge badge-red">Expirado</span> não utilizado</div>
-      <div class="ref">Sorteio #005 · 50 vagas</div>
-    </div>
-    <span class="btn btn-sm" style="opacity:0.4;">expirado</span>
   </div>
 
   <div class="section-header" style="margin-top: var(--spacing-16);">
@@ -362,12 +337,8 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
       <thead>
         <tr><th>Data / Hora</th><th>Catraca</th><th>Valor</th><th>Peso</th><th>FastPass</th></tr>
       </thead>
-      <tbody>
-        <tr><td>25/06/2026 11:30</td><td class="tiny">Refeitório 1 · #001</td><td>R$ 2,50</td><td class="muted">—</td><td><span class="badge badge-green">✓</span></td></tr>
-        <tr><td>24/06/2026 12:15</td><td class="tiny">Refeitório 1 · #001</td><td>R$ 2,50</td><td class="muted">—</td><td class="muted">—</td></tr>
-        <tr><td>22/06/2026 11:45</td><td class="tiny">Refeitório 1 · #001</td><td>R$ 2,50</td><td class="muted">—</td><td class="muted">—</td></tr>
-        <tr><td>20/06/2026 12:30</td><td class="tiny">Refeitório 2 · #002</td><td>R$ 0,00</td><td class="muted">—</td><td><span class="badge badge-green">✓</span></td></tr>
-        <tr><td>18/06/2026 11:20</td><td class="tiny">Rest. Executivo · #006</td><td>R$ 15,00</td><td>0.720 kg</td><td class="muted">—</td></tr>
+      <tbody id="acessosBody">
+        <tr><td colspan="5" class="muted">Carregando...</td></tr>
       </tbody>
     </table>
   </div>
@@ -378,30 +349,36 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
       <h2>💰 Recarregar Saldo</h2>
       <div class="form-group">
         <label>Valor (R$)</label>
-        <div class="input" style="font-size: 28px; padding: 12px; color: var(--color-bone);">R$ 0,00</div>
+        <div class="input" id="depositAmountDisplay" style="font-size: 28px; padding: 12px; color: var(--color-bone);">R$ 0,00</div>
         <div class="amount-picker">
-          <span class="amount-pill">R$ 10</span>
-          <span class="amount-pill">R$ 20</span>
-          <span class="amount-pill">R$ 50</span>
-          <span class="amount-pill">R$ 100</span>
+          <span class="amount-pill" data-valor="10">R$ 10</span>
+          <span class="amount-pill" data-valor="20">R$ 20</span>
+          <span class="amount-pill" data-valor="50">R$ 50</span>
+          <span class="amount-pill" data-valor="100">R$ 100</span>
         </div>
       </div>
       <div class="form-group">
         <label>Método de Pagamento</label>
-        <div class="input">PIX (QR Code)</div>
+        <select id="metodoPagamento">
+          <option value="PIX">PIX</option>
+          <option value="Cartão de Crédito">Cartão de Crédito</option>
+          <option value="Boleto">Boleto</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label>Forma de pagamento</label>
-        <div style="color: var(--color-ash); font-size: 12px; padding: 12px; border: 1px dashed var(--color-graphite); border-radius: var(--radius); text-align: center;">
-          ┌─ PIX ─────────────────────┐<br>
-          │  000201010211...           │<br>
-          │  (QR Code simulado)        │<br>
-          └────────────────────────────┘
+      <div id="pixArea">
+        <div class="form-group">
+          <label>QR Code PIX</label>
+          <div style="color: var(--color-ash); font-size: 12px; padding: 12px; border: 1px dashed var(--color-graphite); border-radius: var(--radius); text-align: center;">
+            ┌─ PIX ─────────────────────┐<br>
+            │  000201010211...           │<br>
+            │  (simulado)                │<br>
+            └────────────────────────────┘
+          </div>
         </div>
       </div>
       <div class="modal-actions">
         <span class="btn" id="closeDeposit">Cancelar</span>
-        <span class="btn btn-primary">Confirmar Recarga</span>
+        <span class="btn btn-primary" id="confirmDeposit">Confirmar Recarga</span>
       </div>
     </div>
   </div>
@@ -415,23 +392,30 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
       </p>
       <div class="form-group">
         <label>Data</label>
-        <div class="input">27/06/2026</div>
+        <input type="date" class="input" id="fpData">
       </div>
       <div class="form-group">
         <label>Refeitório</label>
-        <div class="input">Refeitório 1 · RU Central Darcy</div>
+        <select id="fpRefeitorio">
+          <option value="">Carregando...</option>
+        </select>
       </div>
       <div class="form-group">
-        <label>Refeição</label>
-        <div class="input">Almoço (11:30 — 14:00)</div>
+        <label>Horário</label>
+        <select id="fpHorario">
+          <option value="11:30-14:00">Almoço (11:30 — 14:00)</option>
+          <option value="17:30-19:30">Jantar (17:30 — 19:30)</option>
+          <option value="07:00-09:00">Desjejum (07:00 — 09:00)</option>
+        </select>
       </div>
-      <div style="color: var(--color-ash); font-size: 11px; padding: var(--spacing-16); border: 1px solid var(--color-graphite); border-radius: var(--radius); margin-bottom: var(--spacing-16);">
+      <div id="fpSituacao" style="color: var(--color-ash); font-size: 11px; padding: var(--spacing-16); border: 1px solid var(--color-graphite); border-radius: var(--radius); margin-bottom: var(--spacing-16);">
         <strong style="color:var(--color-bone);">Sua situação atual:</strong><br>
-        Dias sem FastPass: 2 · Chances: médias
+        <span id="fpSituacaoText">Carregando...</span>
       </div>
+      <div id="fpFeedback" style="display:none; font-size: 12px; padding: 8px; border-radius: var(--radius); margin-bottom: var(--spacing-16);"></div>
       <div class="modal-actions">
         <span class="btn" id="closeFastPass">Cancelar</span>
-        <span class="btn btn-primary">Participar do Sorteio</span>
+        <span class="btn btn-primary" id="confirmFastPass">Participar do Sorteio</span>
       </div>
     </div>
   </div>
@@ -440,20 +424,16 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
   <div class="modal-overlay" id="modalAcessos">
     <div class="modal" style="max-width: 560px;">
       <h2>🚪 Histórico de Acessos</h2>
-      <table class="data">
-        <thead>
-          <tr><th>Data</th><th>Catraca</th><th>Valor</th><th>Peso</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>25/06 11:30</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
-          <tr><td>24/06 12:15</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
-          <tr><td>22/06 11:45</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
-          <tr><td>20/06 12:30</td><td class="tiny">Refeitório 2 #002</td><td>R$ 0,00</td><td class="muted">—</td></tr>
-          <tr><td>18/06 11:20</td><td class="tiny">Rest. Executivo #006</td><td>R$ 15,00</td><td>0.720 kg</td></tr>
-          <tr><td>15/06 12:00</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
-          <tr><td>12/06 11:40</td><td class="tiny">Refeitório 1 #001</td><td>R$ 2,50</td><td class="muted">—</td></tr>
-        </tbody>
-      </table>
+      <div style="max-height: 400px; overflow-y: auto;">
+        <table class="data">
+          <thead>
+            <tr><th>Data</th><th>Catraca</th><th>Valor</th><th>Peso</th></tr>
+          </thead>
+          <tbody id="acessosModalBody">
+            <tr><td colspan="4" class="muted">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
       <div class="modal-actions">
         <span class="btn" id="closeAcessos">Fechar</span>
       </div>
@@ -489,6 +469,70 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
     </div>
   </div>
 
+  <!-- Perfil Completo Modal -->
+  <div class="modal-overlay" id="modalPerfil">
+    <div class="modal" style="max-width: 480px;">
+      <h2>👤 Perfil Completo</h2>
+
+      <div style="display:flex; align-items:center; gap: var(--spacing-16); margin-bottom: var(--spacing-19);">
+        <div class="profile-avatar" style="width:56px; height:56px;">
+          <div class="placeholder" id="perfilModalAvatarPlaceholder">
+            <span class="icon" style="font-size:18px;">📸</span>
+          </div>
+          <img id="perfilModalAvatarImg" style="display:none;">
+        </div>
+        <div style="flex:1;">
+          <div id="perfilModalNome" style="font-size:15px;">—</div>
+          <div id="perfilModalEmail" style="color: var(--color-ash); font-size:11px;">—</div>
+        </div>
+        <span class="btn btn-sm" id="btnAlterarFoto">📷 Alterar foto</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Categoria</label>
+          <div class="input" id="perfilCategoria">—</div>
+        </div>
+        <div class="form-group">
+          <label>Prioridade Legal</label>
+          <div class="input" id="perfilPrioridade">—</div>
+        </div>
+      </div>
+
+      <div class="form-group" id="perfilMatriculaGroup" style="display:none;">
+        <label>Matrícula (Estudante)</label>
+        <div class="input" id="perfilMatricula">—</div>
+      </div>
+      <div class="form-group" id="perfilDiasFastpassGroup" style="display:none;">
+        <label>Dias sem FastPass</label>
+        <div class="input" id="perfilDiasFastpass">—</div>
+      </div>
+
+      <div class="form-group" id="perfilSiapeGroup" style="display:none;">
+        <label>SIAPE (Servidor)</label>
+        <div class="input" id="perfilSiape">—</div>
+      </div>
+      <div class="form-group" id="perfilDepartamentoGroup" style="display:none;">
+        <label>Departamento</label>
+        <div class="input" id="perfilDepartamento">—</div>
+      </div>
+
+      <div class="form-group" id="perfilMotivoGroup" style="display:none;">
+        <label>Motivo da Visita (Visitante)</label>
+        <div class="input" id="perfilMotivo">—</div>
+      </div>
+
+      <div class="form-group">
+        <label>Saldo Atual</label>
+        <div class="input" id="perfilSaldo">—</div>
+      </div>
+
+      <div class="modal-actions">
+        <span class="btn" id="closePerfil">Fechar</span>
+      </div>
+    </div>
+  </div>
+
   <hr class="dash">
   <div class="admin-toggle">acesso administrador → painel de controle</div>
   <div class="footer">
@@ -498,53 +542,444 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
 
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// ─── Config ──────────────────────────────────────────────────────────────
+const API = '/api';
+const USUARIO_ID = new URLSearchParams(window.location.search).get('usuario_id') || 1;
+
+// Guarda o último perfil carregado, para reaproveitar no modal de perfil
+// completo sem precisar de um novo fetch.
+let usuarioAtual = null;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────
+
+function showToast(msg, ok = true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = ok ? 'var(--color-green)' : 'var(--color-red)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+function formatDate(d) {
+  return new Date(d).toLocaleString('pt-BR');
+}
+
+function formatTime(d) {
+  return new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function getSelectedValor() {
+  const txt = document.getElementById('depositAmountDisplay').textContent.replace('R$ ', '').replace(',', '.');
+  return parseFloat(txt) || 0;
+}
+
+// ─── Carregar dados da API ──────────────────────────────────────────────
+
+async function loadProfile() {
+  try {
+    const res = await fetch(`${API}/profile?usuario_id=${USUARIO_ID}`);
+    if (!res.ok) throw new Error('Erro ao carregar perfil');
+    const { usuario } = await res.json();
+
+    usuarioAtual = usuario;
+
+    document.querySelector('.profile-info h1').textContent = usuario.nome;
+    document.querySelector('.profile-info .email').textContent = usuario.email;
+
+    const meta = document.querySelector('.profile-info .meta');
+    const parts = [];
+    if (usuario.matricula) parts.push(`matrícula <strong>${usuario.matricula}</strong>`);
+    if (usuario.categoria) parts.push(`categoria <strong>${usuario.categoria}</strong>`);
+    if (usuario.siape) parts.push(`SIAPE <strong>${usuario.siape}</strong>`);
+    if (usuario.departamento) parts.push(`departamento <strong>${usuario.departamento}</strong>`);
+    if (usuario.motivo_visita) parts.push(`motivo <strong>${usuario.motivo_visita}</strong>`);
+    parts.push(`prioridade legal <strong>${usuario.prioridade_legal ? 'Sim' : '—'}</strong>`);
+    meta.innerHTML = parts.map(p => `<span>${p}</span>`).join('');
+
+    document.getElementById('qrUserId').textContent = `USUARIO_${String(usuario.id_usuario).padStart(3, '0')}`;
+    document.getElementById('qrMatricula').textContent = usuario.matricula || '—';
+
+    renderAvatar(usuario);
+
+    const qrData = JSON.stringify({
+      tipo: 'USUARIO_RU', id: usuario.id_usuario, nome: usuario.nome,
+      matricula: usuario.matricula || '', email: usuario.email,
+      categoria: usuario.categoria, prioridade: usuario.prioridade_legal
+    });
+    generateQR(qrData);
+  } catch (err) {
+    console.error('Profile:', err);
+  }
+}
+
+function renderAvatar(usuario) {
+  const img = document.getElementById('avatarImg');
+  const placeholder = document.getElementById('avatarPlaceholder');
+  if (usuario.tem_foto_perfil && usuario.foto_perfil_base64) {
+    img.src = `data:image/png;base64,${usuario.foto_perfil_base64}`;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    placeholder.style.display = 'block';
+  }
+}
+
+function setupAvatarUpload() {
+  // A troca de foto só pode ser iniciada pelo botão dentro do modal de
+  // perfil completo — o avatar da página principal não é mais clicável.
+  document.getElementById('btnAlterarFoto').addEventListener('click', () => {
+    document.getElementById('fotoInput').click();
+  });
+
+  document.getElementById('fotoInput').addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('foto', file);
+
+    try {
+      const res = await fetch(`${API}/usuarios/${USUARIO_ID}/foto`, {
+        method: 'POST',
+        body: formData
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        showToast(result.detail || 'Erro ao enviar foto', false);
+        return;
+      }
+      showToast('Foto atualizada!');
+      await loadProfile();
+      // O modal permanece aberto durante a troca de foto; atualiza sua
+      // preview imediatamente em vez de esperar uma reabertura.
+      if (usuarioAtual) renderPerfilModal(usuarioAtual);
+    } catch (err) {
+      showToast('Erro de conexão', false);
+    }
+  });
+}
+
+// ─── Modal de Perfil Completo (US-01) ───────────────────────────────────────
+
+function mostrarGrupo(groupId, campoId, valor) {
+  const group = document.getElementById(groupId);
+  if (valor !== undefined && valor !== null && valor !== '') {
+    document.getElementById(campoId).textContent = valor;
+    group.style.display = 'block';
+  } else {
+    group.style.display = 'none';
+  }
+}
+
+function renderPerfilModal(usuario) {
+  document.getElementById('perfilModalNome').textContent = usuario.nome;
+  document.getElementById('perfilModalEmail').textContent = usuario.email;
+  document.getElementById('perfilCategoria').textContent = usuario.categoria || '—';
+  document.getElementById('perfilPrioridade').textContent = usuario.prioridade_legal ? 'Sim' : 'Não';
+  document.getElementById('perfilSaldo').textContent =
+    usuario.saldo_atual != null ? `R$ ${usuario.saldo_atual.toFixed(2)}` : '—';
+
+  mostrarGrupo('perfilMatriculaGroup', 'perfilMatricula', usuario.matricula);
+  mostrarGrupo('perfilDiasFastpassGroup', 'perfilDiasFastpass', usuario.dias_sem_fastpass);
+  mostrarGrupo('perfilSiapeGroup', 'perfilSiape', usuario.siape);
+  mostrarGrupo('perfilDepartamentoGroup', 'perfilDepartamento', usuario.departamento);
+  mostrarGrupo('perfilMotivoGroup', 'perfilMotivo', usuario.motivo_visita);
+
+  const img = document.getElementById('perfilModalAvatarImg');
+  const placeholder = document.getElementById('perfilModalAvatarPlaceholder');
+  if (usuario.tem_foto_perfil && usuario.foto_perfil_base64) {
+    img.src = `data:image/png;base64,${usuario.foto_perfil_base64}`;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    placeholder.style.display = 'flex';
+  }
+}
+
+async function loadBalance() {
+  try {
+    const res = await fetch(`${API}/balance?usuario_id=${USUARIO_ID}`);
+    if (!res.ok) throw new Error('Erro ao carregar saldo');
+    const { saldo } = await res.json();
+    const [reais, centavos] = saldo.saldo_atual.toFixed(2).split('.');
+    document.querySelector('.balance-left .value').innerHTML = `R$ ${reais}<small>,${centavos}</small>`;
+  } catch (err) {
+    console.error('Balance:', err);
+  }
+}
+
+async function loadAccesses(limit = 5, tbodyId = 'acessosBody') {
+  try {
+    const res = await fetch(`${API}/accesses?usuario_id=${USUARIO_ID}&limit=${limit}`);
+    if (!res.ok) throw new Error('Erro ao carregar acessos');
+    const { accesses } = await res.json();
+
+    const tbody = document.getElementById(tbodyId);
+    const isModal = tbodyId === 'acessosModalBody';
+
+    if (accesses.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${isModal ? 4 : 5}" class="muted">Nenhum acesso encontrado</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = accesses.map(a => {
+      const data = formatDate(a.data_hora_entrada);
+      const valor = a.valor_cobrado != null ? `R$ ${a.valor_cobrado.toFixed(2)}` : '<span class="muted">—</span>';
+      const peso = a.peso_prato_kg != null ? `${a.peso_prato_kg.toFixed(3)} kg` : '<span class="muted">—</span>';
+      const catraca = `${a.nome_refeitorio} · #${String(a.id_catraca).padStart(3, '0')}`;
+      if (isModal) {
+        return `<tr><td>${data}</td><td class="tiny">${catraca}</td><td>${valor}</td><td>${peso}</td></tr>`;
+      }
+      return `<tr><td>${data}</td><td class="tiny">${catraca}</td><td>${valor}</td><td>${peso}</td><td class="muted">—</td></tr>`;
+    }).join('');
+
+    // Only update lastAccess for the main page (not modal)
+    if (!isModal && accesses.length > 0) {
+      document.getElementById('lastAccess').textContent = formatDate(accesses[0].data_hora_entrada);
+    }
+  } catch (err) {
+    console.error('Accesses:', err);
+  }
+}
+
+async function loadBilhetes() {
+  try {
+    const res = await fetch(`${API}/fastpass/meus-bilhetes?usuario_id=${USUARIO_ID}`);
+    if (!res.ok) throw new Error('Erro ao carregar bilhetes');
+    const { bilhetes } = await res.json();
+
+    const container = document.getElementById('bilhetesContainer');
+    container.innerHTML = '';
+
+    const pendentes = bilhetes.filter(b => b.status_uso === 'Pendente').length;
+    document.getElementById('pendentesCount').textContent = pendentes;
+
+    if (bilhetes.length === 0) {
+      container.innerHTML = '<div class="fastpass-card"><div class="info"><div class="date" style="color:var(--color-ash)">Nenhum bilhete encontrado</div></div></div>';
+      return;
+    }
+
+    bilhetes.slice(0, 5).forEach(b => {
+      const inicio = formatDate(b.horario_inicio);
+      const fim = formatTime(b.horario_fim);
+      const dataStr = `${inicio}–${fim} · ${b.nome_refeitorio}`;
+
+      let badgeClass = 'badge-gray';
+      if (b.status_uso === 'Utilizado') badgeClass = 'badge-green';
+      else if (b.status_uso === 'Pendente') badgeClass = 'badge-yellow';
+      else if (b.status_uso === 'Expirado') badgeClass = 'badge-red';
+
+      const div = document.createElement('div');
+      div.className = 'fastpass-card';
+      div.innerHTML = `
+        <div class="info">
+          <div class="date">${dataStr}</div>
+          <div class="status"><span class="badge ${badgeClass}">${b.status_uso}</span></div>
+          <div class="ref">Sorteio #${String(b.id_sorteio).padStart(3, '0')}</div>
+        </div>
+        <span class="btn btn-sm" style="opacity:0.4;">${b.status_uso === 'Pendente' ? '➤ Usar Agora' : b.status_uso.toLowerCase()}</span>
+      `;
+      container.appendChild(div);
+    });
+  } catch (err) {
+    console.error('Bilhetes:', err);
+  }
+}
+
+// ─── Refeitórios dropdown ──────────────────────────────────────────────────
+
+async function loadRefeitorios() {
+  try {
+    const res = await fetch(`${API}/refeitorios`);
+    if (!res.ok) throw new Error('Erro ao carregar refeitórios');
+    const { refeitorios } = await res.json();
+    const sel = document.getElementById('fpRefeitorio');
+    sel.innerHTML = refeitorios.map(r =>
+      `<option value="${r.id_refeitorio}">${r.nome_refeitorio} · ${r.nome_ru}</option>`
+    ).join('');
+  } catch (err) {
+    console.error('Refeitorios:', err);
+  }
+}
+
+// ─── FastPass situação ──────────────────────────────────────────────────────
+
+async function loadFastPassSituacao() {
+  try {
+    const res = await fetch(`${API}/profile?usuario_id=${USUARIO_ID}`);
+    if (!res.ok) throw new Error();
+    const { usuario } = await res.json();
+    const dias = usuario.dias_sem_fastpass;
+    const chances = dias == null ? '—' : dias <= 2 ? 'baixas' : dias <= 7 ? 'médias' : 'altas';
+    document.getElementById('fpSituacaoText').innerHTML =
+      dias != null ? `Dias sem FastPass: ${dias} · Chances: ${chances}` : 'Faça login para ver sua situação';
+  } catch (err) {
+    document.getElementById('fpSituacaoText').textContent = '—';
+  }
+}
+
+// ─── Ações dos botões ──────────────────────────────────────────────────────
+
+function setupDeposit() {
+  document.querySelectorAll('.amount-pill').forEach(pill => {
+    pill.addEventListener('click', function() {
+      document.querySelectorAll('.amount-pill').forEach(p => { p.style.color = ''; p.style.borderColor = ''; });
+      this.style.color = 'var(--color-bone)';
+      this.style.borderColor = 'var(--color-bone)';
+      const v = parseFloat(this.dataset.valor);
+      document.getElementById('depositAmountDisplay').textContent = `R$ ${v.toFixed(2).replace('.', ',')}`;
+    });
+  });
+
+  document.getElementById('metodoPagamento').addEventListener('change', function() {
+    document.getElementById('pixArea').style.display = this.value === 'PIX' ? 'block' : 'none';
+  });
+
+  document.getElementById('confirmDeposit').addEventListener('click', async function() {
+    const valor = getSelectedValor();
+    if (valor <= 0) { showToast('Selecione um valor', false); return; }
+    const metodo = document.getElementById('metodoPagamento').value;
+    try {
+      const res = await fetch(`${API}/balance/recharge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario_id: USUARIO_ID, valor, metodo_pagamento: metodo })
+      });
+      if (!res.ok) throw new Error('Erro na recarga');
+      const data = await res.json();
+      const [reais, centavos] = data.saldo_atual.toFixed(2).split('.');
+      document.querySelector('.balance-left .value').innerHTML = `R$ ${reais}<small>,${centavos}</small>`;
+      showToast(`Recarga de R$ ${valor.toFixed(2)} confirmada!`);
+      document.getElementById('modalDeposit').classList.remove('show');
+    } catch (err) {
+      showToast('Erro ao recarregar: ' + err.message, false);
+    }
+  });
+}
+
+function setupFastPass() {
+  document.getElementById('confirmFastPass').addEventListener('click', async function() {
+    const data = document.getElementById('fpData').value;
+    const refeitorio_id = parseInt(document.getElementById('fpRefeitorio').value);
+    const horario = document.getElementById('fpHorario').value;
+
+    if (!data || !refeitorio_id) { showToast('Preencha todos os campos', false); return; }
+
+    const [hInicio, hFim] = horario.split('-');
+    const horario_inicio = `${data}T${hInicio}:00`;
+    const horario_fim = `${data}T${hFim}:00`;
+
+    const feedback = document.getElementById('fpFeedback');
+    feedback.style.display = 'none';
+
+    try {
+      const res = await fetch(`${API}/fastpass/solicitar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario_id: USUARIO_ID, refeitorio_id, horario_inicio, horario_fim })
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        feedback.style.display = 'block';
+        feedback.style.color = 'var(--color-red)';
+        feedback.style.border = '1px solid var(--color-red)';
+        feedback.textContent = result.detail || 'Erro ao solicitar';
+        return;
+      }
+      showToast('Sorteio realizado! Verifique seus bilhetes.');
+      document.getElementById('modalFastPass').classList.remove('show');
+      loadBilhetes();
+    } catch (err) {
+      showToast('Erro de conexão', false);
+    }
+  });
+}
+
+function setupModais() {
   const modalDeposit = document.getElementById('modalDeposit');
   const modalFastPass = document.getElementById('modalFastPass');
   const modalAcessos = document.getElementById('modalAcessos');
   const modalBinary = document.getElementById('modalBinaryInfo');
+  const modalPerfil = document.getElementById('modalPerfil');
 
-  document.getElementById('btnDeposit').addEventListener('click', () => modalDeposit.style.display = 'flex');
-  document.getElementById('cardDeposit').addEventListener('click', () => modalDeposit.style.display = 'flex');
-  document.getElementById('cardFastPass').addEventListener('click', () => modalFastPass.style.display = 'flex');
-  document.getElementById('cardAcessos').addEventListener('click', () => modalAcessos.style.display = 'flex');
-  document.getElementById('seeAllAccesses').addEventListener('click', () => modalAcessos.style.display = 'flex');
-  document.getElementById('showPhotoHint').addEventListener('click', () => modalBinary.style.display = 'flex');
+  const openModal = (modal) => modal.classList.add('show');
+  const closeModal = (modal) => modal.classList.remove('show');
 
-  document.getElementById('closeDeposit').addEventListener('click', () => modalDeposit.style.display = 'none');
-  document.getElementById('closeFastPass').addEventListener('click', () => modalFastPass.style.display = 'none');
-  document.getElementById('closeAcessos').addEventListener('click', () => modalAcessos.style.display = 'none');
-  document.getElementById('closeBinaryInfo').addEventListener('click', () => modalBinary.style.display = 'none');
+  // Open
+  document.getElementById('btnDeposit').addEventListener('click', () => openModal(modalDeposit));
+  document.getElementById('cardDeposit').addEventListener('click', () => openModal(modalDeposit));
+  document.getElementById('cardFastPass').addEventListener('click', () => { loadRefeitorios(); loadFastPassSituacao(); openModal(modalFastPass); });
+  document.getElementById('cardAcessos').addEventListener('click', () => { loadAccesses(50, 'acessosModalBody'); openModal(modalAcessos); });
+  document.getElementById('seeAllAccesses').addEventListener('click', () => { loadAccesses(50, 'acessosModalBody'); openModal(modalAcessos); });
+  document.getElementById('showPhotoHint').addEventListener('click', () => openModal(modalBinary));
+  document.getElementById('seeAllFastPass').addEventListener('click', () => { loadBilhetes(); });
 
-  [modalDeposit, modalFastPass, modalAcessos, modalBinary].forEach(m => {
-    m.addEventListener('click', (e) => { if (e.target === m) m.style.display = 'none'; });
+  document.getElementById('navPerfilBtn').addEventListener('click', () => {
+    if (usuarioAtual) renderPerfilModal(usuarioAtual);
+    openModal(modalPerfil);
   });
 
-  document.querySelectorAll('.amount-pill').forEach(pill => {
-    pill.addEventListener('click', function() {
-      document.querySelectorAll('.amount-pill').forEach(p => p.style.color = '');
-      this.style.color = 'var(--color-bone)';
-      this.style.borderColor = 'var(--color-bone)';
-      document.querySelector('#modalDeposit .input').textContent = this.textContent.trim();
-    });
-  });
+  // Close
+  document.getElementById('closeDeposit').addEventListener('click', () => closeModal(modalDeposit));
+  document.getElementById('closeFastPass').addEventListener('click', () => closeModal(modalFastPass));
+  document.getElementById('closeAcessos').addEventListener('click', () => closeModal(modalAcessos));
+  document.getElementById('closeBinaryInfo').addEventListener('click', () => closeModal(modalBinary));
+  document.getElementById('closePerfil').addEventListener('click', () => closeModal(modalPerfil));
 
-  let qrInstance = null;
-  function generateQR(text) {
-    const container = document.getElementById('qrcode');
-    container.innerHTML = '';
-    qrInstance = new QRCode(container, { text, width: 104, height: 104, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-  }
-  function getUserQRData() {
-    return JSON.stringify({ tipo: 'USUARIO_RU', id: 1, nome: 'Antonio Coelho', matricula: '221000001', email: 'antonio@aluno.unb.br', categoria: 1, prioridade: false });
-  }
-  generateQR(getUserQRData());
-  document.getElementById('btnRegenerateQR').addEventListener('click', () => generateQR(getUserQRData()));
-  document.getElementById('btnDownloadQR').addEventListener('click', () => {
-    const canvas = document.querySelector('#qrcode canvas');
-    if (canvas) { const link = document.createElement('a'); link.download = 'carteirinha_221000001.png'; link.href = canvas.toDataURL('image/png'); link.click(); }
+  [modalDeposit, modalFastPass, modalAcessos, modalBinary, modalPerfil].forEach(m => {
+    m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
   });
+}
+
+// ─── QR Code ──────────────────────────────────────────────────────────────
+
+let qrInstance = null;
+function generateQR(text) {
+  const container = document.getElementById('qrcode');
+  container.innerHTML = '';
+  qrInstance = new QRCode(container, { text, width: 104, height: 104, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+}
+
+document.getElementById('btnRegenerateQR').addEventListener('click', () => {
+  const nome = document.querySelector('.profile-info h1').textContent;
+  const matr = document.getElementById('qrMatricula').textContent;
+  generateQR(JSON.stringify({ tipo: 'USUARIO_RU', id: USUARIO_ID, nome, matricula: matr }));
+});
+
+document.getElementById('btnDownloadQR').addEventListener('click', () => {
+  const canvas = document.querySelector('#qrcode canvas');
+  if (canvas) { const link = document.createElement('a'); link.download = `carteirinha_${USUARIO_ID}.png`; link.href = canvas.toDataURL('image/png'); link.click(); }
+});
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+
+// Set default date to today
+function getTodayDate() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Set default date for FastPass form
+  document.getElementById('fpData').value = getTodayDate();
+
+  setupModais();
+  setupDeposit();
+  setupFastPass();
+  setupAvatarUpload();
+
+  loadProfile();
+  loadBalance();
+  loadAccesses();
+  loadBilhetes();
 });
 </script>
 
