@@ -430,3 +430,43 @@ def solicitar_fastpass(body: FastPassRequest, db=Depends(get_db)):
         "contemplado": False,
         "mensagem": "Não foi dessa vez. Suas chances aumentam no próximo sorteio.",
     }
+
+
+class UsarFastPassRequest(BaseModel):
+    usuario_id: int
+    id_bilhete: int
+
+
+@app.post("/api/fastpass/usar")
+def usar_fastpass(body: UsarFastPassRequest, db=Depends(get_db)):
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT id_usuario, status_uso FROM Bilhete_FastPass WHERE id_bilhete = %s",
+        (body.id_bilhete,),
+    )
+    bilhete = cursor.fetchone()
+
+    if not bilhete:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Bilhete não encontrado")
+
+    # Só o dono pode usar o próprio bilhete
+    if bilhete["id_usuario"] != body.usuario_id:
+        cursor.close()
+        raise HTTPException(status_code=403, detail="Este bilhete não é seu.")
+
+    # Só bilhete pendente pode ser usado (não Utilizado nem Expirado)
+    if bilhete["status_uso"] != "Pendente":
+        cursor.close()
+        raise HTTPException(
+            status_code=409,
+            detail=f"Bilhete não está disponível (status: {bilhete['status_uso']}).",
+        )
+
+    cursor.execute(
+        "UPDATE Bilhete_FastPass SET status_uso = 'Utilizado' WHERE id_bilhete = %s",
+        (body.id_bilhete,),
+    )
+    db.commit()
+    cursor.close()
+    return {"status": "utilizado"}
