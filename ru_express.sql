@@ -151,6 +151,18 @@ CREATE TABLE IF NOT EXISTS Bilhete_FastPass (
     FOREIGN KEY (id_refeitorio) REFERENCES Refeitorio(id_refeitorio)
 );
 
+CREATE TABLE IF NOT EXISTS Inscricao_FastPass (
+    id_inscricao INT AUTO_INCREMENT,
+    id_usuario INT NOT NULL,
+    id_sorteio INT NOT NULL,
+    data_inscricao DATETIME NOT NULL,
+
+    PRIMARY KEY (id_inscricao),
+    FOREIGN KEY (id_usuario) REFERENCES Usuario_RU(id_usuario),
+    FOREIGN KEY (id_sorteio) REFERENCES Sorteio_Diario(id_sorteio),
+    UNIQUE KEY uk_inscricao_usuario_sorteio (id_usuario, id_sorteio)
+);
+
 -- =======================================================
 -- TRIGGER: Atualiza saldo automaticamente após recarga
 -- =======================================================
@@ -270,6 +282,95 @@ BEGIN
     WHERE id_usuario IN (SELECT id_usuario FROM Temp_Ganhadores);
 
     -- 6. Limpar tabela temporária
+    DROP TEMPORARY TABLE Temp_Ganhadores;
+
+END //
+
+DELIMITER ;
+
+-- =======================================================
+-- PROCEDURE: Executar sorteio apenas entre inscritos
+-- =======================================================
+
+DELIMITER //
+
+CREATE PROCEDURE IF NOT EXISTS Executar_Sorteio_FastPass (
+    IN p_horario_inicio DATETIME,
+    IN p_horario_fim DATETIME,
+    IN p_vagas INT,
+    IN p_id_refeitorio INT
+)
+BEGIN
+    DECLARE v_id_sorteio INT;
+    DECLARE v_total_inscritos INT;
+    DECLARE v_total_bilhetes INT;
+
+    -- 1. Obter o sorteio já registrado (criado na primeira inscricao)
+    SELECT id_sorteio INTO v_id_sorteio
+    FROM Sorteio_Diario
+    WHERE horario_inicio = p_horario_inicio AND horario_fim = p_horario_fim
+    LIMIT 1;
+
+    IF v_id_sorteio IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Nenhum sorteio encontrado para este horário. É necessário inscrever estudantes primeiro.';
+    END IF;
+
+    -- 2. Verificar se já foi executado (bilhetes já foram gerados)
+    SELECT COUNT(*) INTO v_total_bilhetes
+    FROM Bilhete_FastPass
+    WHERE id_sorteio = v_id_sorteio;
+
+    IF v_total_bilhetes > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Sorteio já foi executado para este horário';
+    END IF;
+
+    -- 3. Verificar se há inscritos
+    SELECT COUNT(*) INTO v_total_inscritos
+    FROM Inscricao_FastPass
+    WHERE id_sorteio = v_id_sorteio;
+
+    IF v_total_inscritos = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Nenhum estudante inscrito para este sorteio';
+    END IF;
+
+    -- 4. Sorteio ponderado apenas entre os inscritos
+    CREATE TEMPORARY TABLE IF NOT EXISTS Temp_Ganhadores (
+        id_usuario INT
+    );
+
+    TRUNCATE TABLE Temp_Ganhadores;
+
+    INSERT INTO Temp_Ganhadores (id_usuario)
+    SELECT e.id_usuario
+    FROM Inscricao_FastPass i
+    JOIN Estudante e ON i.id_usuario = e.id_usuario
+    WHERE i.id_sorteio = v_id_sorteio
+    ORDER BY POW(RAND(), 1.0 / (e.dias_sem_fastpass + 1)) DESC
+    LIMIT p_vagas;
+
+    -- 5. Emitir bilhetes
+    INSERT INTO Bilhete_FastPass (horario_inicio, horario_fim, status_uso, id_sorteio, id_usuario, id_refeitorio)
+    SELECT p_horario_inicio, p_horario_fim, 'Pendente', v_id_sorteio, id_usuario, p_id_refeitorio
+    FROM Temp_Ganhadores;
+
+    -- 6. Atualizar pesos
+    UPDATE Estudante
+    SET dias_sem_fastpass = dias_sem_fastpass + 1
+    WHERE id_usuario IN (
+        SELECT i.id_usuario
+        FROM Inscricao_FastPass i
+        WHERE i.id_sorteio = v_id_sorteio
+          AND i.id_usuario NOT IN (SELECT id_usuario FROM Temp_Ganhadores)
+    );
+
+    UPDATE Estudante
+    SET dias_sem_fastpass = 0
+    WHERE id_usuario IN (SELECT id_usuario FROM Temp_Ganhadores);
+
+    -- 7. Limpar
     DROP TEMPORARY TABLE Temp_Ganhadores;
 
 END //

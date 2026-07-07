@@ -163,3 +163,30 @@ QueryFastPassValido = """
       AND id_refeitorio = %s
     LIMIT 1
 """
+
+QueryInscricaoInsert = """
+    INSERT INTO Inscricao_FastPass (id_usuario, id_sorteio, data_inscricao)
+    VALUES (%s, %s, %s)
+"""
+
+QuerySorteioByHorario = """
+    SELECT id_sorteio, horario_inicio, horario_fim, quantidade_vagas
+    FROM Sorteio_Diario
+    WHERE horario_inicio = %s AND horario_fim = %s
+    LIMIT 1
+"""
+
+QueryInscricaoExists = """
+    SELECT 1 FROM Inscricao_FastPass
+    WHERE id_usuario = %s AND id_sorteio = %s
+"""
+
+QuerySorteiosDisponiveis = """
+    SELECT s.id_sorteio, s.horario_inicio, s.horario_fim, s.quantidade_vagas,
+           r.nome_refeitorio, ru.nome_ru
+    FROM Sorteio_Diario s
+    CROSS JOIN Refeitorio r
+    JOIN Restaurante_Universitario ru ON r.id_ru = ru.id_ru
+    WHERE s.horario_inicio > NOW()
+    ORDER BY s.horario_inicio
+"""
