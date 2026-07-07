@@ -170,10 +170,9 @@ DELIMITER ;
 
 -- =======================================================
 -- TRIGGER: Cobrança na catraca
--- Deriva o tipo de refeição pelo horário da passagem (antes das 10h =
--- desjejum). Nos refeitórios Padrão o valor é o preço fixo do grupo;
--- no Executivo (itens variados) o valor_cobrado é obrigatório no INSERT
--- (senão levanta erro). Registra tipo_refeicao e debita o saldo.
+-- Decide o tipo de refeição pelo horário
+-- e o valor cobrado se não for RU executivo.
+-- Esse valor já é debitado
 -- =======================================================
 
 DELIMITER //
@@ -184,10 +183,8 @@ FOR EACH ROW
 BEGIN
     DECLARE v_servico VARCHAR(100);
 
-    -- Tipo de refeição vem do horário: antes das 10h = desjejum, senão refeição
     SET NEW.tipo_refeicao = IF(HOUR(NEW.data_hora_entrada) < 10, 'Desjejum', 'Refeicao');
 
-    -- Tipo de serviço do refeitório onde fica a catraca
     SELECT r.tipo_servico
     INTO v_servico
     FROM Catraca c
@@ -195,13 +192,11 @@ BEGIN
     WHERE c.id_catraca = NEW.id_catraca;
 
     IF v_servico = 'Executivo' THEN
-        -- Executivo: valor_cobrado é obrigatório (itens variados, sem preço fixo)
         IF NEW.valor_cobrado IS NULL THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'valor_cobrado é obrigatório em refeitório Executivo';
         END IF;
     ELSE
-        -- Padrão: preço fixo do Grupo_Acesso do usuário, conforme o tipo
         SET NEW.valor_cobrado = (
             SELECT CASE
                        WHEN NEW.tipo_refeicao = 'Desjejum' THEN g.valor_desjejum
