@@ -145,3 +145,21 @@ QueryUsuarioExists = """
 QueryUsuarioDelete = """
     DELETE FROM Usuario_RU WHERE id_usuario = %s
 """
+
+# Queries for Access Registration
+QueryCatracaInfo = """
+    SELECT c.id_catraca, r.id_refeitorio, r.nome_refeitorio, ru.nome_ru
+    FROM Catraca c
+    JOIN Refeitorio r ON c.id_refeitorio = r.id_refeitorio
+    JOIN Restaurante_Universitario ru ON r.id_ru = ru.id_ru
+    WHERE c.id_catraca = %s
+"""
+
+QueryFastPassValido = """
+    SELECT id_bilhete
+    FROM Bilhete_FastPass
+    WHERE id_usuario = %s
+      AND status_uso = 'Pendente'
+      AND id_refeitorio = %s
+    LIMIT 1
+"""

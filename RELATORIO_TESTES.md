@@ -140,15 +140,52 @@ curl -s -X POST http://localhost:8000/api/balance/recharge -d '{"usuario_id":1,"
 ### US-08: Registrar Novo Acesso (Catraca)
 **Endpoint:** `POST /api/accesses?usuario_id=X&catraca=Y`
 
-❌ **NÃO IMPLEMENTADO** (Mockado)
-```python
-# backend/main.py linha 226-228
-@app.post("/api/accesses")
-def novo_acesso(usuario_id: int = Query(), catraca: int = Query()):
-    pass  # ❌ NADA IMPLEMENTADO
+✅ **IMPLEMENTADO** - Dupla implementação:
+
+#### Backend API
+- Valida usuário e catraca existentes
+- Verifica FastPass válido no refeitório (marca como Utilizado se aplicável)
+- Insere em `Acesso_RU` (trigger `trg_cobrar_acesso` calcula valor e debita saldo)
+- Retorna: sucesso, usuário, saldo_anterior, saldo_atual, valor_cobrado, tipo_refeicao
+
+#### Catraca Client (Standalone)
+Cliente CLI separado em `catraca_client/` que conecta diretamente ao banco:
+- Prompt para ID da catraca no início
+- Loop para entrada de IDs de usuários
+- Feedback colorido: ✅ verde para acesso autorizado, ❌ vermelho para erros
+- Detecta automaticamente FastPass válido
+- Trata saldo insuficiente e usuário não encontrado
+
+Exemplo:
+```
+=== Catraca RU-Express ===
+
+ID da Catraca: 1
+✓ Catraca conectada: Refeitório 1 - RU Central Darcy
+
+[INPUT] Digite ID do usuário (q para sair): 1
+  ✅ ACESSO AUTORIZADO
+  Usuário: Yasmin Souza (Grupo 2)
+  Saldo anterior: R$ 119.57
+  Valor cobrado: R$ 4.50
+  Saldo atual: R$ 115.07
+  Refeição: Refeicao
 ```
 
 ---
+
+### US-09: Catraca Client (QR Scanner Futuro)
+O cliente foi projetado para futura integração com webcam:
+- Estrutura preparada para leitura de QR code via pyzbar
+- Atualmente usa entrada manual de ID (simples e funcional)
+
+Comando para rodar:
+```bash
+cd catraca_client
+pip install colorama
+python main.py
+```
+
 
 ## Feature 4: Refeitórios e Campus
 
@@ -278,8 +315,8 @@ vw_relatorio_fluxo_ru  -- Agrupa acessos por refeitório com faturamento
 - [x] Fazer recarga de R$ 50 (trigger funcionando)
 - [x] Solicitar FastPass (409 se já existe)
 - [x] Verificar bilhetes gerados
-- [ ] Simular acesso na catraca (endpoint não implementado)
-- [ ] Verificar saldo debitado (trigger não testada via API)
+- [x] Simular acesso na catraca (cliente implementado) ⭐
+- [x] Verificar saldo debitado (trigger `trg_cobrar_acesso`) ⭐
 - [x] Consultar histórico de acessos
 
 ### Fluxo 2: Administrador
@@ -300,13 +337,24 @@ vw_relatorio_fluxo_ru  -- Agrupa acessos por refeitório com faturamento
 
 ---
 
+### Fluxo 4: Catraca Client (Novo) ⭐
+- [x] Iniciar cliente com ID da catraca
+- [x] Validar usuário existente
+- [x] Detectar FastPass válido automaticamente
+- [x] Registrar acesso (trigger cobra saldo automaticamente)
+- [x] Feedback visual colorido
+- [x] Tratamento de erro (usuário não encontrado)
+
+---
+
 ## Recomendações para Conclusão
 
-1. **Implementar `POST /api/accesses`** - Registrar acesso na catraca
-2. **Adicionar `nome_campus`** em `QueryRefeitorios`
-3. **Corrigir caminho do frontend** no `backend/main.py`
-4. **Remover campo `valor_refeicao` e `valor_desjejum`** da resposta do profile (não solicitados na US-01)
-5. **Testar trigger `trg_cobrar_acesso`** via INSERT direto no banco (Executivo sem valor_cobrado deve gerar erro)
+1. ~~**Implementar `POST /api/accesses`** - Registrar acesso na catraca~~ ✅ Concluído
+2. ~~**Criar catraca_client** - Cliente standalone~~ ✅ Concluído
+3. **Adicionar `nome_campus`** em `QueryRefeitorios`
+4. **Corrigir caminho do frontend** no `backend/main.py`
+5. **Remover campo `valor_refeicao` e `valor_desjejum`** da resposta do profile (não solicitados na US-01)
+6. **Testar trigger `trg_cobrar_acesso`** via INSERT direto no banco (Executivo sem valor_cobrado deve gerar erro)
 
 ---
 

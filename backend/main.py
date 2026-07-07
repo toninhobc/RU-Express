@@ -27,6 +27,8 @@ from queries import (
     QueryUsuarioInsert,
     QueryUsuarioExists,
     QueryUsuarioDelete,
+    QueryCatracaInfo,
+    QueryFastPassValido,
 )
 
 VAGASFASTPASS = 20
@@ -299,8 +301,77 @@ def extrato(
 
 
 @app.post("/api/accesses")
-def novo_acesso(usuario_id: int = Query(), catraca: int = Query()):
-    pass
+def novo_acesso(usuario_id: int = Query(), catraca: int = Query(), db=Depends(get_db)):
+    cursor = db.cursor(dictionary=True)
+    
+    # Validate user exists
+    cursor.execute(QueryBalance, (usuario_id,))
+    user = cursor.fetchone()
+    if not user:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    saldo_anterior = user["saldo_atual"]
+    
+    # Validate catraca exists and get refeitorio info
+    cursor.execute(QueryCatracaInfo, (catraca,))
+    catraca_info = cursor.fetchone()
+    if not catraca_info:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Catraca não encontrada")
+    
+    refeitorio_id = catraca_info["id_refeitorio"]
+    
+    # Check for valid FastPass
+    cursor.execute(QueryFastPassValido, (usuario_id, refeitorio_id))
+    fastpass = cursor.fetchone()
+    
+    try:
+        # Insert access - trigger will handle valor_cobrado and saldo deduction
+        cursor.execute(
+            "INSERT INTO Acesso_RU (id_usuario, id_catraca, data_hora_entrada, valor_cobrado) VALUES (%s, %s, %s, NULL)",
+            (usuario_id, catraca, datetime.now()),
+        )
+        db.commit()
+        
+        # If FastPass was used, mark it as Utilizado
+        if fastpass:
+            cursor.execute(
+                "UPDATE Bilhete_FastPass SET status_uso = 'Utilizado' WHERE id_bilhete = %s",
+                (fastpass["id_bilhete"],),
+            )
+            db.commit()
+        
+        # Get updated balance
+        cursor.execute(QuerySaldoAfterRecharge, (usuario_id,))
+        saldo_row = cursor.fetchone()
+        
+        # Get access info
+        cursor.execute(
+            "SELECT tipo_refeicao, valor_cobrado FROM Acesso_RU WHERE id_usuario = %s ORDER BY id_acesso DESC LIMIT 1",
+            (usuario_id,),
+        )
+        acesso = cursor.fetchone()
+        
+    except Exception as e:
+        db.rollback()
+        cursor.close()
+        error_msg = str(e)
+        if "saldo_atual" in error_msg or "CHECK constraint" in error_msg or "128" in error_msg:
+            raise HTTPException(status_code=400, detail="Saldo insuficiente")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {error_msg}")
+    
+    cursor.close()
+    
+    return {
+        "sucesso": True,
+        "usuario": user["nome"],
+        "saldo_anterior": float(saldo_anterior),
+        "saldo_atual": float(saldo_row["saldo_atual"]) if saldo_row else float(saldo_anterior),
+        "valor_cobrado": float(acesso["valor_cobrado"]) if acesso and acesso["valor_cobrado"] else 0,
+        "tipo_refeicao": acesso["tipo_refeicao"] if acesso else "Desjejum",
+        "fastpass_usado": fastpass is not None,
+    }
 
 
 # ─── Admin ────────────────────────────────────────────────────────────────

@@ -58,4 +58,42 @@ pip install fastapi uvicorn python-dotenv mysql-connector-python python-multipar
 uvicorn main:app --reload
 ```
 
+### Catraca Client (Standalone)
+
+O cliente de catraca roda separadamente e registra acessos diretamente no banco de dados.
+
+```
+cd catraca_client
+
+# Instalar dependências
+pip install colorama
+
+# Executar o cliente
+python main.py
+```
+
+Na primeira execução, informe o ID da catraca (ex: 1 para "Refeitório 1"). Depois, digite o ID do usuário para registrar o acesso.
+
+Exemplo de uso:
+```
+=== Catraca RU-Express ===
+
+ID da Catraca: 1
+✓ Catraca conectada: Refeitório 1 - RU Central Darcy
+
+[INPUT] Digite ID do usuário (q para sair): 1
+  ✅ ACESSO AUTORIZADO
+  Usuário: Yasmin Souza (Grupo 2)
+  Saldo anterior: R$ 119.57
+  Valor cobrado: R$ 4.50
+  Saldo atual: R$ 115.07
+  Refeição: Refeicao
+
+[INPUT] Digite ID do usuário (q para sair): 9999
+  ❌ Usuário não encontrado
+
+[INPUT] Digite ID do usuário (q para sair): q
+  Saindo...
+```
+
 
