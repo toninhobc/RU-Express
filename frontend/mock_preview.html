@@ -63,16 +63,17 @@ body {
   color: var(--color-ash);
 }
 .nav-link {
-  color: var(--color-ash);
-  cursor: default;
+  color: var(--color-bone);
+  cursor: pointer;
   padding: 4px 10px;
   border: 1px solid var(--color-graphite);
   border-radius: var(--radius);
   font-size: 11px;
+  transition: all 0.15s;
 }
-.nav-link.active {
-  color: var(--color-bone);
+.nav-link:hover {
   border-color: var(--color-bone);
+  background: var(--color-carbon);
 }
 
 .profile-card {
@@ -214,8 +215,6 @@ table.data .tiny { font-size: 11px; color: var(--color-ash); }
 
 hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: var(--spacing-32) 0; }
 .footer { padding: var(--spacing-27) 0; border-top: 1px solid var(--color-graphite); color: var(--color-ash); font-size: 11px; display: flex; justify-content: space-between; }
-.admin-toggle { margin-bottom: var(--spacing-32); text-align: right; font-size: 10px; color: var(--color-graphite); cursor: default; }
-.admin-toggle:hover { color: var(--color-ash); }
 
 .amount-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .amount-pill { padding: 4px 12px; border: 1px solid var(--color-graphite); border-radius: var(--radius); font-family: var(--font-mono); font-size: 12px; color: var(--color-ash); background: transparent; cursor: pointer; }
@@ -223,6 +222,16 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
 
 .photo-hint { font-size: 10px; color: var(--color-ash); margin-top: 4px; cursor: default; display: inline-block; }
 .photo-hint:hover { color: var(--color-bone); }
+
+.admin-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-16); margin-bottom: var(--spacing-19); }
+.admin-summary-card { background: var(--color-void); border: 1px solid var(--color-graphite); border-radius: var(--radius); padding: var(--spacing-19); }
+.admin-summary-card .label { font-size: 10px; color: var(--color-ash); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+.admin-summary-card .value { font-size: 28px; line-height: 1; }
+.admin-summary-card .subvalue { margin-top: 6px; font-size: 11px; color: var(--color-ash); }
+.admin-chart-note { font-size: 11px; color: var(--color-ash); margin-bottom: var(--spacing-16); }
+.admin-table-wrap { max-height: 360px; overflow-y: auto; border: 1px solid var(--color-graphite); border-radius: var(--radius); }
+.admin-section-title { display: flex; align-items: center; justify-content: space-between; margin: var(--spacing-19) 0 var(--spacing-16); font-size: 12px; color: var(--color-ash); }
+.modal-wide { max-width: 760px; }
 
 .toast {
   position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
@@ -241,8 +250,8 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
   <div class="nav">
     <div class="nav-brand"><span>≡</span> RU·EXPRESS</div>
     <div class="nav-right">
-      <span class="nav-link active" id="navPerfilBtn" style="cursor:pointer;">👤 perfil</span>
-      <span class="nav-link">⚙ admin</span>
+      <span class="nav-link" id="navPerfilBtn" style="cursor:pointer;">👤 perfil</span>
+      <span class="nav-link" id="navAdminBtn" style="cursor:pointer;">⚙ admin</span>
     </div>
   </div>
 
@@ -523,8 +532,55 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
     </div>
   </div>
 
+  <!-- Admin Modal -->
+  <div class="modal-overlay" id="modalAdmin">
+    <div class="modal modal-wide">
+      <h2>⚙ Painel Administrativo</h2>
+      <p style="color: var(--color-ash); font-size: 12px; margin-bottom: var(--spacing-19);">Resumo diário de faturamento e circulação por refeitório, com base na view vw_relatorio_fluxo_ru.</p>
+
+      <div class="admin-summary">
+        <div class="admin-summary-card">
+          <div class="label">Faturamento diário</div>
+          <div class="value" id="adminFaturamento">R$ 0,00</div>
+          <div class="subvalue">Total consolidado do período atual</div>
+        </div>
+        <div class="admin-summary-card">
+          <div class="label">Pessoas atendidas</div>
+          <div class="value" id="adminAtendidos">0</div>
+          <div class="subvalue">Total de acessos registrados</div>
+        </div>
+        <div class="admin-summary-card">
+          <div class="label">Maior movimento</div>
+          <div class="value" id="adminTopRefeitorio">—</div>
+          <div class="subvalue" id="adminTopDetalhe">Sem dados ainda</div>
+        </div>
+      </div>
+
+      <div class="admin-chart-note" id="adminResumoText">Carregando dados do painel...</div>
+
+      <div class="admin-section-title">
+        <span>Circulação por refeitório</span>
+        <span>faturamento e pessoas atendidas</span>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="data">
+          <thead>
+            <tr><th>Refeitório</th><th>Serviço</th><th>Pessoas</th><th>Faturamento</th></tr>
+          </thead>
+          <tbody id="adminRelatorioBody">
+            <tr><td colspan="4" class="muted">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-actions">
+        <span class="btn" id="closeAdmin">Fechar</span>
+      </div>
+    </div>
+  </div>
+
   <hr class="dash">
-  <div class="admin-toggle">acesso administrador → painel de controle</div>
   <div class="footer">
     <span>RU-Express · Banco de Dados 2026/1</span>
     <span>UnB · FGA · v1.0</span>
@@ -798,6 +854,7 @@ async function loadBilhetes() {
       else if (b.status_uso === 'Pendente') badgeClass = 'badge-yellow';
       else if (b.status_uso === 'Expirado') badgeClass = 'badge-red';
 
+      const usavel = b.status_uso === 'Pendente';
       const div = document.createElement('div');
       div.className = 'fastpass-card';
       div.innerHTML = `
@@ -806,12 +863,31 @@ async function loadBilhetes() {
           <div class="status"><span class="badge ${badgeClass}">${b.status_uso}</span></div>
           <div class="ref">Sorteio #${String(b.id_sorteio).padStart(3, '0')}</div>
         </div>
-        <span class="btn btn-sm" style="opacity:0.4;">${b.status_uso === 'Pendente' ? '➤ Usar Agora' : b.status_uso.toLowerCase()}</span>
+        <span class="btn btn-sm usar-btn" style="${usavel ? 'cursor:pointer;' : 'opacity:0.4;'}">${usavel ? '➤ Usar Agora' : b.status_uso.toLowerCase()}</span>
       `;
+      if (usavel) {
+        div.querySelector('.usar-btn').addEventListener('click', () => usarBilhete(b.id_bilhete));
+      }
       container.appendChild(div);
     });
   } catch (err) {
     console.error('Bilhetes:', err);
+  }
+}
+
+async function usarBilhete(idBilhete) {
+  try {
+    const res = await fetch(`${API}/fastpass/usar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario_id: USUARIO_ID, id_bilhete: idBilhete })
+    });
+    const result = await res.json();
+    if (!res.ok) { showToast(result.detail || 'Erro ao usar bilhete', false); return; }
+    showToast('FastPass utilizado! ✓');
+    loadBilhetes();
+  } catch (err) {
+    showToast('Erro de conexão', false);
   }
 }
 
@@ -938,12 +1014,76 @@ function setupFastPass() {
   });
 }
 
+// ─── Admin (view vw_relatorio_fluxo_ru) ─────────────────────────────────────
+
+function formatCurrencyBR(value) {
+  const number = Number(value) || 0;
+  return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+async function loadAdminRelatorio() {
+  const tbody = document.getElementById('adminRelatorioBody');
+  const resumoText = document.getElementById('adminResumoText');
+
+  tbody.innerHTML = `<tr><td colspan="4" class="muted">Carregando...</td></tr>`;
+  resumoText.textContent = 'Consultando a view de fluxo do restaurante...';
+
+  try {
+    const res = await fetch(`${API}/admin/relatorio-fluxo`);
+    if (!res.ok) throw new Error('Erro ao carregar relatório');
+    const { relatorio } = await res.json();
+
+    if (!relatorio.length) {
+      document.getElementById('adminFaturamento').textContent = formatCurrencyBR(0);
+      document.getElementById('adminAtendidos').textContent = '0';
+      document.getElementById('adminTopRefeitorio').textContent = '—';
+      document.getElementById('adminTopDetalhe').textContent = 'Sem registros no período';
+      resumoText.textContent = 'Nenhum acesso registrado na view atual (a view mostra o dia de hoje).';
+      tbody.innerHTML = `<tr><td colspan="4" class="muted">Nenhum dado encontrado</td></tr>`;
+      return;
+    }
+
+    const totalPessoas = relatorio.reduce((acc, row) => acc + (Number(row.total_pessoas_atendidas) || 0), 0);
+    const totalFaturamento = relatorio.reduce((acc, row) => acc + (Number(row.faturamento_diario) || 0), 0);
+    const top = relatorio.reduce((best, row) => {
+      const bestValue = Number(best?.total_pessoas_atendidas) || 0;
+      const currentValue = Number(row.total_pessoas_atendidas) || 0;
+      return currentValue > bestValue ? row : best;
+    }, relatorio[0]);
+
+    document.getElementById('adminFaturamento').textContent = formatCurrencyBR(totalFaturamento);
+    document.getElementById('adminAtendidos').textContent = String(totalPessoas);
+    document.getElementById('adminTopRefeitorio').textContent = top?.nome_refeitorio || '—';
+    document.getElementById('adminTopDetalhe').textContent = top
+      ? `${top.total_pessoas_atendidas || 0} pessoas atendidas no período`
+      : 'Sem destaque';
+
+    resumoText.textContent = `Consolidado em ${relatorio.length} refeitório(s) neste período.`;
+
+    tbody.innerHTML = relatorio.map(row => {
+      const faturamento = formatCurrencyBR(row.faturamento_diario);
+      const pessoas = Number(row.total_pessoas_atendidas) || 0;
+      return `<tr>
+        <td>${row.nome_refeitorio || '—'}</td>
+        <td class="tiny">${row.tipo_servico || '—'}</td>
+        <td>${pessoas}</td>
+        <td>${faturamento}</td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    console.error('Admin report:', err);
+    resumoText.textContent = 'Falha ao carregar o painel administrativo.';
+    tbody.innerHTML = `<tr><td colspan="4" class="muted">Erro ao carregar relatório</td></tr>`;
+  }
+}
+
 function setupModais() {
   const modalDeposit = document.getElementById('modalDeposit');
   const modalFastPass = document.getElementById('modalFastPass');
   const modalAcessos = document.getElementById('modalAcessos');
   const modalPerfil = document.getElementById('modalPerfil');
   const modalExtrato = document.getElementById('modalExtrato');
+  const modalAdmin = document.getElementById('modalAdmin');
 
   const openModal = (modal) => modal.classList.add('show');
   const closeModal = (modal) => modal.classList.remove('show');
@@ -962,14 +1102,20 @@ function setupModais() {
     openModal(modalPerfil);
   });
 
+  document.getElementById('navAdminBtn').addEventListener('click', () => {
+    loadAdminRelatorio();
+    openModal(modalAdmin);
+  });
+
   // Close
   document.getElementById('closeDeposit').addEventListener('click', () => closeModal(modalDeposit));
   document.getElementById('closeFastPass').addEventListener('click', () => closeModal(modalFastPass));
   document.getElementById('closeAcessos').addEventListener('click', () => closeModal(modalAcessos));
   document.getElementById('closePerfil').addEventListener('click', () => closeModal(modalPerfil));
   document.getElementById('closeExtrato').addEventListener('click', () => closeModal(modalExtrato));
+  document.getElementById('closeAdmin').addEventListener('click', () => closeModal(modalAdmin));
 
-  [modalDeposit, modalFastPass, modalAcessos, modalPerfil, modalExtrato].forEach(m => {
+  [modalDeposit, modalFastPass, modalAcessos, modalPerfil, modalExtrato, modalAdmin].forEach(m => {
     m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
   });
 }
