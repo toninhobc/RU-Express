@@ -270,8 +270,6 @@ def _seed_acessos(cursor, todos_ids, cat_map):
             valor_ref, valor_des = precos[cat_map[uid]]
             valor = valor_des if tipo == "Desjejum" else valor_ref
             peso = None
-            
-            
 
         cursor.execute(
             "SELECT saldo_atual FROM Usuario_RU WHERE id_usuario = %s", (uid,)
@@ -291,14 +289,14 @@ def _seed_acessos(cursor, todos_ids, cat_map):
         if catraca in catracas_executivas:
             cursor.execute(
                 "INSERT INTO Acesso_RU (data_hora_entrada, valor_cobrado, peso_prato_kg, id_usuario, id_catraca) "
-             "VALUES (%s, %s, %s, %s, %s)",
+                "VALUES (%s, %s, %s, %s, %s)",
                 (data_hora, valor, peso, uid, catraca),
             )
         else:
             cursor.execute(
-                "INSERT INTO Acesso_RU (data_hora_entrada, valor_cobrado, peso_prato_kg, id_usuario, id_catraca) "
-                "VALUES (%s, %s, %s, %s, %s)",
-                (data_hora, valor, peso, uid, catraca),
+                "INSERT INTO Acesso_RU (data_hora_entrada, peso_prato_kg, id_usuario, id_catraca) "
+                "VALUES (%s, %s, %s, %s)",
+                (data_hora, peso, uid, catraca),
             )
         inseridos += 1
 
