@@ -57,6 +57,33 @@ QueryAcessos = """
         LIMIT %s OFFSET %s;
         """
 
+QueryExtrato = """
+    SELECT data_hora, tipo, descricao, valor
+    FROM (
+        SELECT
+            data_hora_recarga AS data_hora,
+            'entrada' AS tipo,
+            CONCAT('Recarga via ', metodo_pagamento) AS descricao,
+            valor_adicionado AS valor
+        FROM Recarga_Saldo
+        WHERE id_usuario = %s
+
+        UNION ALL
+
+        SELECT
+            a.data_hora_entrada AS data_hora,
+            'saida' AS tipo,
+            CONCAT(COALESCE(a.tipo_refeicao, 'Refeição'), ' - ', r.nome_refeitorio) AS descricao,
+            a.valor_cobrado AS valor
+        FROM Acesso_RU a
+        JOIN Catraca c ON a.id_catraca = c.id_catraca
+        JOIN Refeitorio r ON c.id_refeitorio = r.id_refeitorio
+        WHERE a.id_usuario = %s
+    ) AS extrato
+    ORDER BY data_hora DESC
+    LIMIT %s OFFSET %s;
+"""
+
 QueryAdminUsuariosBase = """
     SELECT
         id_usuario,

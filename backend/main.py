@@ -17,6 +17,7 @@ from queries import (
     QueryUser,
     QueryBalance,
     QueryAcessos,
+    QueryExtrato,
     QueryBilheteBase,
     QueryRefeitorios,
     QueryRechargeInsert,
@@ -269,6 +270,25 @@ def accesses(
     cursor.close()
     return {"accesses": rows}
 
+
+@app.get("/api/extrato")
+def extrato(
+    usuario_id: int = Query(),
+    limit: int = Query(20),
+    offset: int = Query(0),
+    db=Depends(get_db),
+):
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(QueryBalance, (usuario_id,))
+    if not cursor.fetchone():
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    cursor.execute(QueryExtrato, (usuario_id, usuario_id, limit, offset))
+    rows = cursor.fetchall()
+    cursor.close()
+    return {"extrato": rows}
 
 @app.post("/api/accesses")
 def novo_acesso(usuario_id: int = Query(), catraca: int = Query()):

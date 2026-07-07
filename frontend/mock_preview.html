@@ -440,6 +440,26 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
     </div>
   </div>
 
+  <!-- Extrato Modal -->
+  <div class="modal-overlay" id="modalExtrato">
+    <div class="modal" style="max-width: 560px;">
+      <h2>📋 Extrato</h2>
+      <div style="max-height: 420px; overflow-y: auto;">
+        <table class="data">
+          <thead>
+            <tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th></tr>
+          </thead>
+          <tbody id="extratoBody">
+            <tr><td colspan="4" class="muted">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-actions">
+        <span class="btn" id="closeExtrato">Fechar</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Binary Data Info Modal -->
   <div class="modal-overlay" id="modalBinaryInfo">
     <div class="modal">
@@ -469,7 +489,7 @@ hr.dash { border: none; border-top: 1px dashed var(--color-graphite); margin: va
     </div>
   </div>
 
-  <!-- Perfil Completo Modal -->
+  <!-- Perfil Completo Modal (US-01) -->
   <div class="modal-overlay" id="modalPerfil">
     <div class="modal" style="max-width: 480px;">
       <h2>👤 Perfil Completo</h2>
@@ -747,6 +767,40 @@ async function loadAccesses(limit = 5, tbodyId = 'acessosBody') {
   }
 }
 
+async function loadExtrato(limit = 50) {
+  const tbody = document.getElementById('extratoBody');
+  tbody.innerHTML = `<tr><td colspan="4" class="muted">Carregando...</td></tr>`;
+  try {
+    const res = await fetch(`${API}/extrato?usuario_id=${USUARIO_ID}&limit=${limit}`);
+    if (!res.ok) throw new Error('Erro ao carregar extrato');
+    const { extrato } = await res.json();
+
+    if (extrato.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="muted">Nenhuma movimentação encontrada</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = extrato.map(mov => {
+      const data = formatDate(mov.data_hora);
+      const isEntrada = mov.tipo === 'entrada';
+      const badgeClass = isEntrada ? 'badge-green' : 'badge-red';
+      const badgeLabel = isEntrada ? 'entrada' : 'saída';
+      const sinal = isEntrada ? '+' : '−';
+      const valorTexto = mov.valor != null ? `${sinal} R$ ${mov.valor.toFixed(2)}` : '<span class="muted">—</span>';
+      const corValor = isEntrada ? 'var(--color-green)' : 'var(--color-red)';
+      return `<tr>
+        <td>${data}</td>
+        <td class="tiny">${mov.descricao}</td>
+        <td><span class="badge ${badgeClass}">${badgeLabel}</span></td>
+        <td style="color:${corValor};">${valorTexto}</td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    console.error('Extrato:', err);
+    tbody.innerHTML = `<tr><td colspan="4" class="muted">Erro ao carregar extrato</td></tr>`;
+  }
+}
+
 async function loadBilhetes() {
   try {
     const res = await fetch(`${API}/fastpass/meus-bilhetes?usuario_id=${USUARIO_ID}`);
@@ -906,6 +960,7 @@ function setupModais() {
   const modalAcessos = document.getElementById('modalAcessos');
   const modalBinary = document.getElementById('modalBinaryInfo');
   const modalPerfil = document.getElementById('modalPerfil');
+  const modalExtrato = document.getElementById('modalExtrato');
 
   const openModal = (modal) => modal.classList.add('show');
   const closeModal = (modal) => modal.classList.remove('show');
@@ -918,6 +973,7 @@ function setupModais() {
   document.getElementById('seeAllAccesses').addEventListener('click', () => { loadAccesses(50, 'acessosModalBody'); openModal(modalAcessos); });
   document.getElementById('showPhotoHint').addEventListener('click', () => openModal(modalBinary));
   document.getElementById('seeAllFastPass').addEventListener('click', () => { loadBilhetes(); });
+  document.getElementById('btnHistory').addEventListener('click', () => { loadExtrato(); openModal(modalExtrato); });
 
   document.getElementById('navPerfilBtn').addEventListener('click', () => {
     if (usuarioAtual) renderPerfilModal(usuarioAtual);
@@ -930,8 +986,9 @@ function setupModais() {
   document.getElementById('closeAcessos').addEventListener('click', () => closeModal(modalAcessos));
   document.getElementById('closeBinaryInfo').addEventListener('click', () => closeModal(modalBinary));
   document.getElementById('closePerfil').addEventListener('click', () => closeModal(modalPerfil));
+  document.getElementById('closeExtrato').addEventListener('click', () => closeModal(modalExtrato));
 
-  [modalDeposit, modalFastPass, modalAcessos, modalBinary, modalPerfil].forEach(m => {
+  [modalDeposit, modalFastPass, modalAcessos, modalBinary, modalPerfil, modalExtrato].forEach(m => {
     m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
   });
 }
