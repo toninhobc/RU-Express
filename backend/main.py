@@ -80,7 +80,6 @@ def relatorio_fluxo(db=Depends(get_db)):
 def admin_usuarios(categoria: str = Query(None), busca: str = Query(None), db=Depends(get_db)):
     cursor = db.cursor(dictionary=True)
 
-    # Para evitar erro com o BLOB, buscamos colunas explicitamente.
     sql = QueryAdminUsuariosBase
     params = []
 
