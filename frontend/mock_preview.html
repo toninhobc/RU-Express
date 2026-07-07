@@ -863,10 +863,14 @@ async function loadBilhetes() {
           <div class="status"><span class="badge ${badgeClass}">${b.status_uso}</span></div>
           <div class="ref">Sorteio #${String(b.id_sorteio).padStart(3, '0')}</div>
         </div>
-        <span class="btn btn-sm usar-btn" style="${usavel ? 'cursor:pointer;' : 'opacity:0.4;'}">${usavel ? '➤ Usar Agora' : b.status_uso.toLowerCase()}</span>
+        <div style="display:flex; gap:6px;">
+          <span class="btn btn-sm usar-btn" style="${usavel ? 'cursor:pointer;' : 'opacity:0.4;'}">${usavel ? '➤ Usar' : b.status_uso.toLowerCase()}</span>
+          ${usavel ? `<span class="btn btn-sm btn-danger cancelar-btn" style="cursor:pointer;">🗑 Cancelar</span>` : ''}
+        </div>
       `;
       if (usavel) {
         div.querySelector('.usar-btn').addEventListener('click', () => usarBilhete(b.id_bilhete));
+        div.querySelector('.cancelar-btn').addEventListener('click', () => cancelarBilhete(b.id_bilhete));
       }
       container.appendChild(div);
     });
@@ -885,6 +889,24 @@ async function usarBilhete(idBilhete) {
     const result = await res.json();
     if (!res.ok) { showToast(result.detail || 'Erro ao usar bilhete', false); return; }
     showToast('FastPass utilizado! ✓');
+    loadBilhetes();
+  } catch (err) {
+    showToast('Erro de conexão', false);
+  }
+}
+
+async function cancelarBilhete(idBilhete) {
+  if (!confirm('Tem certeza que deseja cancelar este FastPass?')) return;
+  try {
+    const res = await fetch(`${API}/fastpass/bilhetes/${idBilhete}?usuario_id=${USUARIO_ID}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      showToast(err.detail || 'Erro ao cancelar bilhete', false);
+      return;
+    }
+    showToast('FastPass cancelado! 🗑');
     loadBilhetes();
   } catch (err) {
     showToast('Erro de conexão', false);

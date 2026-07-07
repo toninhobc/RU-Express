@@ -547,6 +547,36 @@ def usar_fastpass(body: UsarFastPassRequest, db=Depends(get_db)):
     return {"status": "utilizado"}
 
 
+@app.delete("/api/fastpass/bilhetes/{id_bilhete}", status_code=status.HTTP_204_NO_CONTENT)
+def deletar_bilhete(id_bilhete: int, usuario_id: int = Query(), db=Depends(get_db)):
+    """Cancela/exclui um bilhete FastPass pendente."""
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT id_usuario, status_uso FROM Bilhete_FastPass WHERE id_bilhete = %s",
+        (id_bilhete,),
+    )
+    bilhete = cursor.fetchone()
+
+    if not bilhete:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Bilhete não encontrado")
+
+    if bilhete["id_usuario"] != usuario_id:
+        cursor.close()
+        raise HTTPException(status_code=403, detail="Este bilhete não é seu.")
+
+    if bilhete["status_uso"] != "Pendente":
+        cursor.close()
+        raise HTTPException(
+            status_code=409,
+            detail=f"Não é possível excluir bilhete com status '{bilhete['status_uso']}'.",
+        )
+
+    cursor.execute("DELETE FROM Bilhete_FastPass WHERE id_bilhete = %s", (id_bilhete,))
+    db.commit()
+    cursor.close()
+
+
 class InscricaoFastPassRequest(BaseModel):
     usuario_id: int
     horario_inicio: str
