@@ -1,16 +1,19 @@
 from datetime import datetime
 import os
 
+import base64
 import mysql.connector
+
 from fastapi import FastAPI, Depends, Query, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
 
-from .db import init_db, get_db
-from .queries import (
+from db import init_db, get_db
+from queries import (
     QueryUser,
     QueryBalance,
     QueryAcessos,
@@ -66,11 +69,50 @@ def profile(usuario_id: int = Query(), db=Depends(get_db)):
 
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    foto_bytes = usuario.pop("foto_perfil", None)
 
     # Limpa os nulos vindos do LEFT JOIN para deixar o JSON bonito
     usuario_limpo = {k: v for k, v in usuario.items() if v is not None}
+    if "prioridade_legal" in usuario_limpo:
+        usuario_limpo["prioridade_legal"] = bool(usuario_limpo["prioridade_legal"])
+
+    usuario_limpo["tem_foto_perfil"] = foto_bytes is not None
+    if foto_bytes:
+        usuario_limpo["foto_perfil_base64"] = base64.b64encode(foto_bytes).decode("ascii")
+
     return {"usuario": usuario_limpo}
 
+MAX_FOTO_BYTES = 2 * 1024 * 1024  # 2 MB
+TIPOS_PERMITIDOS = {"image/jpeg", "image/png", "image/webp"}
+
+
+@app.post("/api/usuarios/{usuario_id}/foto")
+async def upload_foto(usuario_id: int, foto: UploadFile = File(...), db=Depends(get_db)):
+    if foto.content_type not in TIPOS_PERMITIDOS:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato inválido. Envie JPEG, PNG ou WEBP.",
+        )
+
+    conteudo = await foto.read()
+
+    if len(conteudo) > MAX_FOTO_BYTES:
+        raise HTTPException(status_code=400, detail="Arquivo maior que 2MB.")
+
+    cursor = db.cursor()
+    cursor.execute(QueryUsuarioExists, (usuario_id,))
+    if not cursor.fetchone():
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    cursor.execute(
+        "UPDATE Usuario_RU SET foto_perfil = %s WHERE id_usuario = %s",
+        (conteudo, usuario_id),
+    )
+    db.commit()
+    cursor.close()
+    return {"status": "foto atualizada"}
 
 class UsuarioCreate(BaseModel):
     nome: str
@@ -217,6 +259,11 @@ def accesses(
     db=Depends(get_db),
 ):
     cursor = db.cursor(dictionary=True)
+    cursor.execute(QueryBalance, (usuario_id,))
+    usuario_existe = cursor.fetchone()
+    if not usuario_existe:
+        cursor.close()
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
     cursor.execute(QueryAcessos, (usuario_id, limit, offset))
     rows = cursor.fetchall()
     cursor.close()

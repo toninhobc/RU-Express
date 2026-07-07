@@ -5,6 +5,7 @@ QueryUser = """
             u.email, 
             u.saldo_atual, 
             u.prioridade_legal, 
+            u.foto_perfil,
             g.nome_categoria AS categoria, 
             g.valor_refeicao, 
             g.valor_desjejum,
@@ -20,6 +21,8 @@ QueryUser = """
         LEFT JOIN Visitante v ON u.id_usuario = v.id_usuario
         WHERE u.id_usuario = %s;
         """
+        
+
 
 QueryBalance = """
         SELECT

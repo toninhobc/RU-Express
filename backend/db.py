@@ -1,7 +1,7 @@
 import os
 import mysql.connector
 from dotenv import load_dotenv
-from .seed import run_seed
+from seed import run_seed
 
 load_dotenv()
 
